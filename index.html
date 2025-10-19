@@ -1,29 +1,26 @@
 <script src="https://www.gstatic.com/firebasejs/10.1.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.1.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.1.0/firebase-firestore-compat.js"></script><
-<script>
-// 用 Firebase Console 裡的 Web App 設定替換以下欄位
+npm install firebase
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "你的apiKey",
-  authDomain: "你的authDomain",
-  projectId: "你的projectId",
-  storageBucket: "你的storageBucket",
-  messagingSenderId: "你的MessagingSenderId",
-  appId: "你的AppId"
+  apiKey: "AIzaSyBur0DoRPT0csPqtyDSOQBYMjlGaqf3EB0",
+  authDomain: "fitness-guide-9a8f3.firebaseapp.com",
+  projectId: "fitness-guide-9a8f3",
+  storageBucket: "fitness-guide-9a8f3.firebasestorage.app",
+  messagingSenderId: "969288112649",
+  appId: "1:969288112649:web:58b5b807c410388b1836d8",
+  measurementId: "G-7X1L324K0Q"
 };
 
-// 初始化
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db   = firebase.firestore();
-
-// 測試：寫一筆資料到 Firestore（之後可刪）
-db.collection('tests').add({
-  createdAt: new Date(),
-  note: 'hello from index.html'
-}).then(doc => {
-  console.log('Write OK, id =', doc.id);
-}).catch(console.error);
-</script>
-                                                                                                
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);                                                                                                
 </body>
