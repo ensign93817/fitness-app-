@@ -1,130 +1,20 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>健身推薦系統｜fitness-guide</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700&display=swap" rel="stylesheet">
-  <style>
-    :root{
-      --bg:#0f1115; --panel:#151923; --muted:#9aa3b2; --text:#e9edf1; --accent:#3ee4a8; --accent2:#7aa2ff; --danger:#ff6b6b;
-      --card:#1a1f2b; --border:#2a3142;
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>健身推薦系統</title>
+  <script>
+    // 若有登入資料 → 跳到訓練頁，否則到個資頁
+    const user = localStorage.getItem("fitnessUserId");
+    if (user) {
+      window.location.href = "training.html";
+    } else {
+      window.location.href = "profile.html";
     }
-    *{box-sizing:border-box}
-    body{margin:0;background:var(--bg);color:var(--text);font-family:"Noto Sans TC", system-ui, -apple-system, Segoe UI, Roboto,"Helvetica Neue", Arial;}
-    .wrap{max-width:1080px;margin:40px auto;padding:0 20px}
-    .hero{display:flex;gap:18px;align-items:center;margin-bottom:24px}
-    .logo{width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,var(--accent2),var(--accent));display:grid;place-items:center;font-weight:700;color:#0f1115}
-    h1{font-size:26px;margin:0}
-    .muted{color:var(--muted)}
-    .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-    .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px}
-    label{display:block;font-size:14px;color:var(--muted);margin-bottom:6px}
-    select,input,button{width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--border);background:#0f131b;color:var(--text);font-size:15px}
-    select:focus,input:focus,button:focus{outline:2px solid var(--accent)}
-    button.primary{background:linear-gradient(135deg,#2ed7a0,#66f2c7);color:#0b1020;border:none;font-weight:700;cursor:pointer}
-    button.ghost{background:transparent;border:1px dashed var(--border);color:var(--muted);cursor:pointer}
-    .row{display:flex;gap:10px}
-    .row > *{flex:1}
-    .result{border:1px solid var(--border);border-radius:14px;padding:14px;background:var(--panel)}
-    .result h3{margin:0 0 6px 0}
-    .tag{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;border:1px solid var(--border);color:var(--muted);margin-right:6px}
-    .ok{color:#0b2;}.warn{color:#cc0}.bad{color:#f55}
-    .small{font-size:13px}
-    .hl{color:var(--accent)}
-    .danger{color:var(--danger)}
-    .mt{margin-top:12px}
-    .mono{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,"Liberation Mono","Courier New", monospace;}
-    .footer{color:var(--muted);font-size:12px;margin-top:24px}
-  </style>
+  </script>
 </head>
-<body>
-  <div class="wrap">
-    <div class="hero">
-      <div class="logo">FG</div>
-      <div>
-        <h1>健身推薦系統 <span class="muted">（fitness-guide）</span></h1>
-        <div class="muted small">選擇訓練目標與部位 → 依使用者回饋（✅/🟡/❌）產生下一次重量與建議</div>
-      </div>
-    </div>
-
-    <!-- 操作面板 -->
-    <div class="grid">
-      <div class="card">
-        <label>訓練目標</label>
-        <select id="goal">
-          <option value="">請選擇</option>
-          <option>增肌</option>
-          <option>減脂</option>
-          <option>力量</option>
-          <option>耐力</option>
-        </select>
-
-        <div class="mt"></div>
-        <label>訓練部位</label>
-        <select id="muscle">
-          <option value="">請先選上方目標</option>
-        </select>
-
-        <div class="mt"></div>
-        <label>訓練動作</label>
-        <select id="exercise">
-          <option value="">請先選上方部位</option>
-        </select>
-
-        <div class="mt"></div>
-        <label>使用者回饋</label>
-        <select id="feedback">
-          <option value="">請選擇</option>
-          <option>第一次</option>
-          <option>✅ 持續完成目標4次</option>
-          <option>🟡 完成但感吃力</option>
-          <option>❌ 無法完成 & 疲勞高</option>
-        </select>
-
-        <div class="mt row">
-          <button id="recommend" class="primary">產生建議</button>
-          <button id="reset" class="ghost">清空</button>
-        </div>
-      </div>
-
-      <!-- 結果 -->
-      <div class="card">
-        <div class="result" id="result">
-          <h3 class="muted">這裡會顯示建議</h3>
-          <div class="small">包含：建議重量、下次增減、建議次數/組數、休息時間，以及（減脂/耐力）是否需搭配有氧</div>
-        </div>
-
-        <div class="mt small muted">資料來源：Firestore collection <span class="mono">workouts / 目標 / 肌群 / 動作</span></div>
-      </div>
-    </div>
-
-    <!-- 匯入/維運工具 -->
-    <div class="card mt">
-      <div class="row">
-        <div>
-          <label>一次匯入四份 Excel（副檔名 .xlsx）</label>
-          <input type="file" id="excel" accept=".xlsx" multiple />
-        </div>
-        <div class="row" style="align-items:flex-end">
-          <button id="importExcel" class="ghost">匯入 Excel 到 Firestore（管理員用）</button>
-          <button id="loadFS" class="ghost">從 Firestore 重新載入清單</button>
-        </div>
-      </div>
-      <div class="small muted mt">
-        初次建置：請先把 Firestore 規則設為測試模式，再點「匯入 Excel 到 Firestore」。完成後記得把規則收緊。
-      </div>
-    </div>
-
-    <div class="footer">© fitness-guide · 前端使用 Firebase（compat）+ Firestore</div>
-  </div>
-
-  <!-- Firebase compat（最穩定、適合單檔網站） -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-  <!-- 讀 Excel 用（SheetJS） -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <script src="./main.js"></script>
+<body style="background:#0f1115;color:#e0e0e0;text-align:center;font-family:'Noto Sans TC'">
+  <p>載入中...</p>
 </body>
 </html>
