@@ -1,0 +1,48 @@
+body {
+  margin: 0;
+  background: #0f1115;
+  color: #e0e0e0;
+  font-family: "Noto Sans TC", sans-serif;
+}
+.container {
+  max-width: 640px;
+  margin: 40px auto;
+  background: #1b1d21;
+  padding: 24px;
+  border-radius: 16px;
+  box-shadow: 0 0 12px rgba(0,0,0,0.3);
+}
+h1 { color: #3ee48a; text-align: center; }
+label { display: block; margin: 12px 0 4px; }
+input, select {
+  width: 100%;
+  padding: 8px;
+  border-radius: 8px;
+  border: none;
+  outline: none;
+  background: #25282d;
+  color: #e0e0e0;
+}
+button {
+  width: 100%;
+  margin-top: 20px;
+  padding: 10px;
+  border: none;
+  border-radius: 10px;
+  background: #3ee48a;
+  color: #000;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.2s;
+}
+button:hover { background: #30c574; }
+.nav { text-align: center; margin-bottom: 20px; }
+.nav a { color: #9aa3b2; text-decoration: none; margin: 0 8px; }
+.nav a:hover { color: #3ee48a; }
+.card {
+  background: #22252b;
+  padding: 16px;
+  border-radius: 12px;
+  margin-bottom: 12px;
+}
+.hl { color: #3ee48a; font-weight: bold; }
