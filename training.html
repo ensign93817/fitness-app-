@@ -40,5 +40,16 @@
   </div>
 
   <script src="js/training.js"></script>
+  <!-- 置於 </body> 前；順序不可顛倒 -->
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+<script src="js/firebase.js"></script>
+
+<!-- Excel 解析：請用 jsDelivr 這條，避免之前 SRI 報錯 -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+<!-- 訓練頁邏輯（載入 Firestore 菜單、寫入紀錄、Excel 匯入） -->
+<script src="js/training.js"></script>
+
 </body>
 </html>
