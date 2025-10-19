@@ -1,26 +1,71 @@
-<script src="https://www.gstatic.com/firebasejs/10.1.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.1.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.1.0/firebase-firestore-compat.js"></script><
-npm install firebase
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fitness Guide 健身紀錄系統</title>
+</head>
+<body>
+  <h1>🏋️ 健身訓練紀錄系統</h1>
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyBur0DoRPT0csPqtyDSOQBYMjlGaqf3EB0",
-  authDomain: "fitness-guide-9a8f3.firebaseapp.com",
-  projectId: "fitness-guide-9a8f3",
-  storageBucket: "fitness-guide-9a8f3.firebasestorage.app",
-  messagingSenderId: "969288112649",
-  appId: "1:969288112649:web:58b5b807c410388b1836d8",
-  measurementId: "G-7X1L324K0Q"
-};
+  <form id="training-form">
+    <input id="exercise" placeholder="動作名稱">
+    <input id="weight" placeholder="重量 (kg)" type="number">
+    <input id="reps" placeholder="次數" type="number">
+    <button type="submit">記錄訓練</button>
+  </form>
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);                                                                                                
+  <h2>📋 最近的訓練紀錄</h2>
+  <div id="workout-list"></div>
+
+  <!-- Firebase 相容版 SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.1.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.1.0/firebase-firestore-compat.js"></script>
+
+  <script>
+    // 這裡貼上你的 Firebase 設定（來自 Firebase Console）
+    const firebaseConfig = {
+      apiKey: "AIzaSyBurD0RpT0csPqtyDSoqBYMjIgafqf3EB0",
+      authDomain: "fitness-guide.firebaseapp.com",
+      projectId: "fitness-guide-9a8f3",
+      storageBucket: "fitness-guide-9a8f3.appspot.com",
+      messagingSenderId: "969288112649",
+      appId: "1:969288112649:web:58b5b807c410388b1836d",
+      measurementId: "G-7X1L324K0Q"
+    };
+
+    // 初始化 Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // ✅ 訓練紀錄表單事件
+    const form = document.getElementById('training-form');
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const exercise = form.exercise.value;
+      const weight = parseInt(form.weight.value);
+      const reps = parseInt(form.reps.value);
+
+      await db.collection('workouts').add({
+        exercise,
+        weight,
+        reps,
+        time: new Date()
+      });
+
+      alert('✅ 訓練紀錄已儲存！');
+      form.reset();
+    });
+
+    // ✅ 讀取 Firestore 中的資料
+    db.collection('workouts').orderBy('time', 'desc').onSnapshot(snapshot => {
+      const list = document.getElementById('workout-list');
+      list.innerHTML = '';
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        list.innerHTML += `<p>${data.exercise} - ${data.weight}kg × ${data.reps} 次</p>`;
+      });
+    });
+  </script>
 </body>
+</html>
