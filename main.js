@@ -25,10 +25,21 @@ const $importExcel = document.getElementById('importExcel');
 const $loadFS = document.getElementById('loadFS');
 
 // ====== 依序載入 Firestore 清單 ======
-async function getMuscles(goal){
-  const snap = await db.collection('workouts').doc(goal).listCollections();
-  // listCollections() 回傳子集合陣列
-  return snap.map(c => c.id).sort();
+async function getMuscles(goal) {
+  try {
+    const muscleSnap = await db.collection('workouts').doc(goal).get();
+    const subs = await db.collection('workouts').doc(goal).listDocuments(); // ⚠️ 改成 listDocuments()
+    const muscleSet = new Set();
+    for (const docRef of subs) {
+      const pathParts = docRef.path.split('/');
+      const maybeMuscle = pathParts[pathParts.length - 1];
+      if (maybeMuscle) muscleSet.add(maybeMuscle);
+    }
+    return Array.from(muscleSet).sort();
+  } catch (err) {
+    console.error('getMuscles 錯誤：', err);
+    return [];
+  }
 }
 
 async function getExercises(goal, muscle){
