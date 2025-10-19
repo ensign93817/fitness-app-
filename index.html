@@ -1,4 +1,29 @@
 <script src="https://www.gstatic.com/firebasejs/10.1.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.1.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.1.0/firebase-firestore-compat.js"></script><
+<script>
+// 用 Firebase Console 裡的 Web App 設定替換以下欄位
+const firebaseConfig = {
+  apiKey: "你的apiKey",
+  authDomain: "你的authDomain",
+  projectId: "你的projectId",
+  storageBucket: "你的storageBucket",
+  messagingSenderId: "你的MessagingSenderId",
+  appId: "你的AppId"
+};
+
+// 初始化
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db   = firebase.firestore();
+
+// 測試：寫一筆資料到 Firestore（之後可刪）
+db.collection('tests').add({
+  createdAt: new Date(),
+  note: 'hello from index.html'
+}).then(doc => {
+  console.log('Write OK, id =', doc.id);
+}).catch(console.error);
+</script>
+                                                                                                
 </body>
