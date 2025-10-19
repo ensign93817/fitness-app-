@@ -25,28 +25,40 @@ const $importExcel = document.getElementById('importExcel');
 const $loadFS = document.getElementById('loadFS');
 
 // ====== 依序載入 Firestore 清單 ======
+// ====== 依序載入 Firestore 清單 ======
 async function getMuscles(goal) {
   try {
     const muscleSnap = await db.collection('workouts').doc(goal).get();
-    const subs = await db.collection('workouts').doc(goal).listDocuments(); // ⚠️ 改成 listDocuments()
-    const muscleSet = new Set();
-    for (const docRef of subs) {
-      const pathParts = docRef.path.split('/');
-      const maybeMuscle = pathParts[pathParts.length - 1];
-      if (maybeMuscle) muscleSet.add(maybeMuscle);
-    }
-    return Array.from(muscleSet).sort();
+    // 取得該目標底下所有子集合名稱（例如：胸部+三頭肌、背部+二頭肌）
+    const path = db.collection('workouts').doc(goal);
+    const subRef = await db.collectionGroup('workouts')
+      .where(firebase.firestore.FieldPath.documentId(), '!=', goal)
+      .get();
+    const muscles = [];
+    subRef.forEach((doc) => {
+      const pathArr = doc.ref.path.split('/');
+      if (pathArr.length >= 2 && pathArr[1] === goal && pathArr.length === 4) {
+        muscles.push(pathArr[2]);
+      }
+    });
+    return [...new Set(muscles)].sort();
   } catch (err) {
     console.error('getMuscles 錯誤：', err);
     return [];
   }
 }
 
-async function getExercises(goal, muscle){
-  const coll = db.collection('workouts').doc(goal).collection(muscle);
-  const snap = await coll.get();
-  return snap.docs.map(d => d.id).sort();
+async function getExercises(goal, muscle) {
+  try {
+    const coll = db.collection('workouts').doc(goal).collection(muscle);
+    const snap = await coll.get();
+    return snap.docs.map(d => d.id).sort();
+  } catch (err) {
+    console.error('getExercises 錯誤：', err);
+    return [];
+  }
 }
+
 
 async function getExerciseDoc(goal, muscle, exercise){
   const ref = db.collection('workouts').doc(goal).collection(muscle).doc(exercise);
