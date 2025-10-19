@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>訓練推薦 - 健身推薦系統</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+  <script src="js/firebase.js"></script>
+</head>
+<body>
+  <div class="nav">
+    <a href="profile.html">個人資料</a>｜<a href="training.html">訓練推薦</a>
+  </div>
+
+  <div class="container">
+    <h1>訓練推薦</h1>
+
+    <label>訓練目標</label>
+    <select id="goal">
+      <option value="">請選擇</option>
+      <option>增肌</option>
+      <option>減脂</option>
+      <option>力量</option>
+      <option>耐力</option>
+    </select>
+
+    <label>訓練部位</label>
+    <select id="muscle">
+      <option value="">請選擇</option>
+      <option>胸部+三頭肌</option>
+      <option>背部+二頭肌</option>
+      <option>腿部+核心</option>
+      <option>肩部</option>
+    </select>
+
+    <button id="recommend">產生建議</button>
+    <div id="result"></div>
+  </div>
+
+  <script src="js/training.js"></script>
+</body>
+</html>
