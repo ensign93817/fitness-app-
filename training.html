@@ -1,21 +1,12 @@
-<nav style="text-align: center; margin-top: 20px;">
-  <a href="index.html" style="color:#00ff99; margin: 0 10px;">🏠 首頁</a>
-  <a href="profile.html" style="color:#00ff99; margin: 0 10px;">👤 個人資料</a>
-</nav>
-
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>訓練推薦 - 健身推薦系統</title>
+  <title>訓練推薦</title>
   <link rel="stylesheet" href="css/style.css">
-
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
-  <script src="js/firebase.js"></script>
 </head>
+
 <body>
   <div class="container">
     <h1>訓練推薦</h1>
@@ -23,13 +14,22 @@
     <label>訓練目標</label>
     <select id="goal">
       <option value="">請選擇</option>
-      <option value="增肌">增肌</option>
       <option value="減脂">減脂</option>
+      <option value="增肌">增肌</option>
       <option value="力量">力量</option>
+      <option value="耐力">耐力</option>
     </select>
 
     <label>訓練部位</label>
-    <select id="muscle"></select>
+    <select id="part">
+      <option value="">請選擇</option>
+      <option value="胸">胸</option>
+      <option value="背">背</option>
+      <option value="腿">腿</option>
+      <option value="肩">肩</option>
+      <option value="手">手</option>
+      <option value="腹">腹</option>
+    </select>
 
     <label>訓練動作</label>
     <select id="exercise"></select>
@@ -37,16 +37,21 @@
     <label>使用者回饋</label>
     <select id="feedback">
       <option value="">請選擇</option>
-      <option>✅ 持續完成目標4次</option>
-      <option>🟡 完成但感吃力</option>
-      <option>❌ 無法完成 & 疲勞高</option>
+      <option value="太輕鬆">太輕鬆</option>
+      <option value="剛剛好">剛剛好</option>
+      <option value="太吃力">太吃力</option>
     </select>
 
-    <button id="saveTraining">產生建議</button>
+    <button id="generate">產生建議</button>
     <div id="result"></div>
   </div>
 
-<script type="module" src="js/firebase.js"></script>
+  <!-- ❌ 移除舊版 firebase script -->
+  <!-- ✅ 改用 type="module" -->
+  <script type="module" src="js/training.js"></script>
+</body>
+</html>
+
 <script type="module" src="js/training.js"></script>
 </body>
 </html>
