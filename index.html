@@ -3,18 +3,60 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>健身推薦系統</title>
-  <script>
-    // 若有登入資料 → 跳到訓練頁，否則到個資頁
-    const user = localStorage.getItem("fitnessUserId");
-    if (user) {
-      window.location.href = "training.html";
-    } else {
-      window.location.href = "profile.html";
+  <title>健身推薦系統｜首頁</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    body {
+      background-color: #111;
+      color: white;
+      font-family: "Microsoft JhengHei", sans-serif;
+      text-align: center;
+      margin: 0;
+      padding: 0;
     }
-  </script>
+
+    .container {
+      margin-top: 100px;
+    }
+
+    h1 {
+      color: #00ff99;
+      margin-bottom: 20px;
+    }
+
+    p {
+      width: 80%;
+      margin: 0 auto 20px;
+      line-height: 1.8;
+      color: #ccc;
+    }
+
+    .btn {
+      display: inline-block;
+      background-color: #00ff99;
+      color: #000;
+      font-weight: bold;
+      border: none;
+      padding: 15px 30px;
+      border-radius: 8px;
+      text-decoration: none;
+      transition: 0.3s;
+    }
+
+    .btn:hover {
+      background-color: #00cc7a;
+    }
+  </style>
 </head>
-<body style="background:#0f1115;color:#e0e0e0;text-align:center;font-family:'Noto Sans TC'">
-  <p>載入中...</p>
+<body>
+  <div class="container">
+    <h1>健身推薦系統</h1>
+    <p>
+      想開始健身卻不知道從哪裡下手？  
+      本系統將依據你的個人資料與訓練目標，為你產生專屬的訓練建議。  
+      無論是增肌、減脂還是提升力量，都能幫助你更有效率地達成目標！
+    </p>
+    <a href="profile.html" class="btn">建立個人資料</a>
+  </div>
 </body>
 </html>
