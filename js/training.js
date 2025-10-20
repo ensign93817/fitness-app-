@@ -1,51 +1,35 @@
-// ====== Excel → Firestore 匯入（管理員用） ======
-function rowsToFirestoreBatch(rows) {
-  // 依「目標 > 肌群 > 動作」彙整；每個動作內再依回饋彙整
-  const map = new Map(); // key: `${goal}|${muscle}|${exercise}` -> object
-  for (const r of rows) {
-    const goal = String(r['目標']).trim();
-    const muscle = String(r['訓練肌群']).trim();
-    const exercise = String(r['訓練動作']).trim();
-    const reps = String(r['次數']).trim();
-    const sets = String(r['組數']).trim();
-    const rest = String(r['休息時間']).trim();
-    const state = String(r['使用者反應']).trim();
-    const weight = Number(r['重量'] ?? r['重量(KG)'] ?? 0);
-    const delta = Number(r['每次增減重量'] ?? 0);
-    const cardio = r['有氧'] ? String(r['有氧']).trim() : null;
+// js/training.js
+document.addEventListener("DOMContentLoaded", async () => {
+  const rec = document.getElementById("recommendation");
 
-    const key = `${goal}|${muscle}|${exercise}`;
-    if (!map.has(key)) {
-      map.set(key, { goal, muscle, exercise, reps, sets, rest, cardio, rules: [] });
+  try {
+    const docRef = db.collection("users").doc("user_001");
+    const docSnap = await docRef.get();
+
+    if (docSnap.exists) {
+      const data = docSnap.data();
+      let plan = "";
+
+      if (data.gender === "男") {
+        plan = "建議以增肌訓練為主：深蹲、硬舉、臥推、引體向上";
+      } else {
+        plan = "建議以全身緊實與核心訓練為主：深蹲、登山者、平板支撐";
+      }
+
+      rec.innerHTML = `
+        <p>👤 性別：${data.gender}</p>
+        <p>🎂 年齡：${data.age}</p>
+        <p>📏 身高：${data.height} cm</p>
+        <p>⚖️ 體重：${data.weight} kg</p>
+        <hr>
+        <h3>💪 推薦訓練：</h3>
+        <p>${plan}</p>
+      `;
+    } else {
+      rec.textContent = "尚未建立個人資料，請先前往填寫。";
     }
-
-    // ⚙️ 自動分配 delta
-    // 當 Excel 裡有填「每次增減重量」時，自動建立對應規則
-    const obj = map.get(key);
-    obj.rules.push({
-      state,                // ✅ 🟡 ❌ 等反饋狀態
-      weight: isNaN(weight) ? null : weight,
-      delta: isNaN(delta) ? 0 : delta
-    });
+  } catch (error) {
+    console.error("載入失敗：", error);
+    rec.textContent = "⚠️ 無法載入訓練推薦。";
   }
-  return Array.from(map.values());
-}
-
-// 上傳到 Firestore
-async function uploadToFirestore(items) {
-  const tasks = [];
-  for (const it of items) {
-    const ref = db.collection('workouts').doc(it.goal).collection(it.muscle).doc(it.exercise);
-    const payload = {
-      reps: it.reps,
-      sets: it.sets,
-      rest: it.rest,
-      cardio: it.cardio || null,
-      rules: it.rules,
-      initialWeight: it.rules.find(r => r.state === '第一次')?.weight ?? null,
-      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-    };
-    tasks.push(ref.set(payload, { merge: true }));
-  }
-  await Promise.all(tasks);
-}
+});
