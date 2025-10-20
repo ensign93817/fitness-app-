@@ -1,8 +1,8 @@
-// ✅ Firebase 初始化設定（避免重複初始化）
+// js/firebase.js
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
-// === 將以下換成你 Firebase 專案設定 ===
+// === 換成你的專案設定 ===
 const firebaseConfig = {
   apiKey: "AIzaSyBurBoRPT0csPqtyDSOQBYMj1Gaqf3EB0",
   authDomain: "fitness-guide-9a8f3.firebaseapp.com",
@@ -13,8 +13,8 @@ const firebaseConfig = {
   measurementId: "G-7XL1324K8Q"
 };
 
-// ✅ 檢查是否已初始化，避免重複錯誤
+// ✅ 避免重複初始化
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
-// ✅ 匯出 Firestore
+// ✅ 匯出 Firestore 供其他檔案使用
 export const db = getFirestore(app);
