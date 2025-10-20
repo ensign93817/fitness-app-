@@ -1,33 +1,33 @@
-<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-  <meta charset="UTF-8" />
-  <title>個人資料</title>
-  <link rel="stylesheet" href="css/style.css" />
-</head>
-<body>
-  <div class="container">
-    <h2>建立個人資料</h2>
-    <form id="profileForm">
-      <label for="gender">性別</label>
-      <select id="gender">
-        <option value="">請選擇</option>
-        <option value="男">男</option>
-        <option value="女">女</option>
-      </select>
+// js/profile.js
+document.addEventListener("DOMContentLoaded", () => {
+  const form = document.getElementById("profileForm");
+  if (!form) {
+    console.error("❌ 找不到 id='profileForm' 的表單元素");
+    return;
+  }
 
-      <label for="age">年齡</label>
-      <input type="number" id="age" placeholder="請輸入年齡">
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
 
-      <label for="height">身高 (cm)</label>
-      <input type="number" id="height" placeholder="請輸入身高">
+    const gender = document.getElementById("gender").value;
+    const age = document.getElementById("age").value;
+    const height = document.getElementById("height").value;
+    const weight = document.getElementById("weight").value;
 
-      <label for="weight">體重 (kg)</label>
-      <input type="number" id="weight" placeholder="請輸入體重">
-
-      <button type="submit">儲存資料</button>
-    </form>
-  </div>
+    try {
+      await db.collection("users").doc("user_001").set({
+        gender,
+        age,
+        height,
+        weight
+      });
+      alert("✅ 資料已成功儲存！");
+    } catch (error) {
+      console.error("❌ 儲存失敗:", error);
+      alert("儲存失敗，請稍後再試。");
+    }
+  });
+});
 
   <script src="js/firebase.js"></script>
   <script src="js/profile.js"></script>
