@@ -169,18 +169,19 @@ const userRef = doc(db, "profiles", userId);
     const reduceBtn = card.querySelector(".reduce-btn");
 
     // Firestore 紀錄函式
-    async function saveWeightChange(newWeight) {
-      const today = new Date().toISOString().split("T")[0];
-      await updateDoc(userRef, {
-        [`history.${name}.${today}`]: newWeight,
-      }).catch(async () => {
-        await setDoc(
-          userRef,
-          { history: { [name]: { [today]: newWeight } } },
-          { merge: true }
-        );
-      });
-    }
+   async function saveWeightChange(newWeight) {
+  const today = new Date().toISOString().split("T")[0];
+  const safeName = name.replace(/[\/\[\]#$.]/g, "_"); // 🔧 移除非法字元
+  await updateDoc(userRef, {
+    [`history.${safeName}.${today}`]: newWeight,
+  }).catch(async () => {
+    await setDoc(
+      userRef,
+      { history: { [safeName]: { [today]: newWeight } } },
+      { merge: true }
+    );
+  });
+}
 
     // === 三個控制按鈕 ===
     addBtn.addEventListener("click", async () => {
