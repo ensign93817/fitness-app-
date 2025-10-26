@@ -6,7 +6,7 @@ import { getFirestore, collection, doc, getDoc, setDoc, addDoc, getDocs, query, 
 
 // TODO: 替換成你的 Firebase 專案設定
 export const firebaseConfig = {
- apiKey: "AIzaSyBur0DoRPT0csPqtyDSOQBYMjlGaqf3EB0",
+  apiKey: "AIzaSyBur0DoRPT0csPqtyDSOQBYMjlGaqf3EB0",
   authDomain: "fitness-guide-9a8f3.firebaseapp.com",
   projectId: "fitness-guide-9a8f3",
   storageBucket: "fitness-guide-9a8f3.firebasestorage.app",
