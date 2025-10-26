@@ -77,3 +77,40 @@ select, button {
   background-color: #dc3545;
   color: white;
 }
+.exercise-card {
+  background: #fff;
+  border-radius: 15px;
+  padding: 20px;
+  margin: 20px auto;
+  width: 90%;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.exercise-card h3 {
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.exercise-card p {
+  margin: 5px 0;
+}
+
+.btn-group {
+  margin-top: 10px;
+}
+
+.btn-group button {
+  margin-right: 8px;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 14px;
+  cursor: pointer;
+}
+
+.add-btn { background-color: #28a745; color: white; }
+.keep-btn { background-color: #007bff; color: white; }
+.reduce-btn { background-color: #dc3545; color: white; }
+
+.add-btn:hover, .keep-btn:hover, .reduce-btn:hover {
+  opacity: 0.8;
+}
