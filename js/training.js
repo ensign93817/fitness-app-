@@ -59,6 +59,52 @@ loadBtn.addEventListener("click", async () => {
 
   renderExercises(data.exercises);
 });
+// 建立每個動作卡片
+docSnap.data().exercises
+  .filter(ex => ex["使用者反應"] === "第一次")
+  .forEach((ex, index) => {
+    const card = document.createElement("div");
+    card.classList.add("exercise-card");
+
+    // 初始重量與增減量
+    let currentWeight = ex.defaultWeight || ex["重量(KG)"] || 0;
+    const delta = ex.deltaWeight || ex["每次增減重量量(KG)"] || 0;
+
+    card.innerHTML = `
+      <h3>${index + 1}. ${ex.name || ex["訓練動作"]}</h3>
+      <p>組數：${ex.defaultSets || ex["組數"]}　次數：${ex.defaultReps || ex["次數"]}</p>
+      <p>休息：${ex.restSec || ex["休息時間"]} 秒</p>
+      <p>重量：<span class="weight">${currentWeight}</span> kg</p>
+      <div class="btn-group">
+        <button class="add-btn">加重</button>
+        <button class="keep-btn">維持</button>
+        <button class="reduce-btn">減重</button>
+      </div>
+    `;
+
+    // 綁定按鈕事件
+    const weightSpan = card.querySelector(".weight");
+    const addBtn = card.querySelector(".add-btn");
+    const keepBtn = card.querySelector(".keep-btn");
+    const reduceBtn = card.querySelector(".reduce-btn");
+
+    addBtn.addEventListener("click", () => {
+      currentWeight += delta;
+      weightSpan.textContent = currentWeight;
+    });
+
+    keepBtn.addEventListener("click", () => {
+      alert("保持當前重量：" + currentWeight + " kg");
+    });
+
+    reduceBtn.addEventListener("click", () => {
+      currentWeight -= delta;
+      if (currentWeight < 0) currentWeight = 0;
+      weightSpan.textContent = currentWeight;
+    });
+
+    container.appendChild(card);
+  });
 
 // ---------------------------
 // 顯示訓練動作
