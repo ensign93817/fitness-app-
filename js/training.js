@@ -1,7 +1,14 @@
-// ========== Firebase 初始化 ==========
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+// === Firebase SDK 載入 ===
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import {
+  getFirestore,
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+// === Firebase 初始化設定 ===
 const firebaseConfig = {
   apiKey: "AIzaSyBur0DoRPT0csPqtyDSOQBYMjlGaqf3EB0",
   authDomain: "fitness-guide-9a8f3.firebaseapp.com",
@@ -15,124 +22,179 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// ========== DOM ==========
+// === DOM 取得 ===
 const goalSelect = document.getElementById("goalSelect");
 const partSelect = document.getElementById("partSelect");
 const loadBtn = document.getElementById("loadBtn");
 const container = document.getElementById("exerciseContainer");
 
-// ========== 載入菜單 ==========
+// === 載入菜單按鈕事件 ===
 loadBtn.addEventListener("click", async () => {
-  const goal = goalSelect.value.trim();
-  const part = partSelect.value.trim();
-
-  if (!goal || !part) {
-    alert("請選擇訓練目標與部位！");
-    return;
-  }
-
-  const docName = `${goal}_${part}`;
-  console.log("📦 嘗試讀取文件：", docName);
+  const goal = goalSelect.value;
+  const part = partSelect.value;
+  const docRef = doc(db, "menus", `${goal}_${part}`);
+  container.innerHTML = "<p>⏳ 正在載入中...</p>";
 
   try {
-    const docRef = doc(db, "menus", docName);
     const docSnap = await getDoc(docRef);
-
-    if (!docSnap.exists()) {
-      container.innerHTML = `<p>⚠️ 找不到此訓練菜單。</p>`;
-      return;
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      console.log("✅ 成功載入 Firestore 文件：", data);
+      displayExercises(data.exercises || []);
+    } else {
+      console.warn("⚠️ 找不到文件：", `${goal}_${part}`);
+      container.innerHTML = `<p style="color:red;">❌ 找不到此目標與部位的訓練菜單。</p>`;
     }
-
-    const data = docSnap.data();
-    console.log("✅ 成功載入文件資料：", data);
-    displayExercises(data.exercises || []);
-  } catch (error) {
-    console.error("❌ Firestore 讀取錯誤：", error);
+  } catch (err) {
+    console.error("🔥 Firestore 讀取錯誤：", err);
     container.innerHTML = `<p style="color:red;">❌ 無法載入菜單，請稍後再試。</p>`;
   }
 });
 
-// ========== 顯示訓練項目 ==========
-function displayExercises(exercises) {
+// === 顯示訓練菜單 ===
+async function displayExercises(exercises) {
   container.innerHTML = "";
 
-  if (!Array.isArray(exercises) || exercises.length === 0) {
-    container.innerHTML = `<p>⚠️ 沒有可用的訓練項目。</p>`;
-    return;
-  }
-
-  // ✅ 去重：若重複動作，保留「第一筆有重量資料」的版本
+  // 去重複處理（防止同名動作重複顯示）
   const uniqueMap = new Map();
-  exercises.forEach(ex => {
-    const name = ex.name || ex["訓練動作"] || "未命名動作";
-    const weight = Number(ex.defaultWeight || ex["重量(KG)"] || 0);
-    if (!uniqueMap.has(name)) {
-      uniqueMap.set(name, ex);
-    } else {
-      const saved = uniqueMap.get(name);
-      if ((!saved.defaultWeight || saved.defaultWeight === 0) && weight > 0) {
-        uniqueMap.set(name, ex);
-      }
-    }
+  exercises.forEach((ex) => {
+    const name = ex.name || "未命名動作";
+    if (!uniqueMap.has(name)) uniqueMap.set(name, ex);
   });
-
   const uniqueExercises = Array.from(uniqueMap.values());
 
-  // ✅ 顯示卡片
-  uniqueExercises.forEach((ex, i) => {
-    const name = ex.name || ex["訓練動作"] || "未命名動作";
-    const reps = ex.defaultReps || ex["次數"] || "8–12";
-    const sets = ex.defaultSets || ex["組數"] || "3–4";
-    const rest = ex.restSec || ex["休息時間"] || 75;
-    
-// ✅ 根據目標補推薦重量
-let baseWeight = Number(ex.defaultWeight || ex["重量(KG)"]);
-if (!baseWeight || baseWeight === 0) {
-  const goal = goalSelect.value; // 從選單抓訓練目標
-  if (goal === "增肌") baseWeight = 30;
-  else if (goal === "力量") baseWeight = 40;
-  else if (goal === "減脂") baseWeight = 20;
-  else if (goal === "耐力") baseWeight = 15;
-  else baseWeight = 25;
-}
+  // === 逐一建立動作卡片 ===
+  uniqueExercises.forEach(async (ex, i) => {
+    const name = ex.name || "未命名動作";
+    const reps = ex.defaultReps || "8–12";
+    const sets = ex.defaultSets || "3–4";
+    const rest = ex.restSec || 75;
+    const delta = Number(ex.deltaWeight || 2.5);
 
-const delta = Number(ex.deltaWeight || ex["每次增減重量量(KG)"] || 2.5);
+    // === 推薦重量邏輯 ===
+    let baseWeight = Number(ex.defaultWeight || 0);
+    let sourceLabel = "（系統推薦值）";
+
+    // Firestore 紀錄讀取（個人化）
+    const userId = "defaultUser"; // 若未整合登入系統，可用固定名稱
+    const userRef = doc(db, "profiles", userId);
+    const userSnap = await getDoc(userRef);
+
+    let history = {};
+    if (userSnap.exists()) {
+      history = userSnap.data().history?.[name] || {};
+      const dates = Object.keys(history);
+      if (dates.length > 0) {
+        const lastDate = dates[dates.length - 1];
+        baseWeight = history[lastDate];
+        sourceLabel = "（根據上次訓練）";
+      }
+    }
+
+    // 若 Firestore 沒資料則依目標給預設值
+    if (!baseWeight || baseWeight === 0) {
+      const goal = goalSelect.value;
+      if (goal === "增肌") baseWeight = 30;
+      else if (goal === "力量") baseWeight = 40;
+      else if (goal === "減脂") baseWeight = 20;
+      else if (goal === "耐力") baseWeight = 15;
+      else baseWeight = 25;
+    }
 
     let currentWeight = baseWeight;
 
+    // === 卡片 DOM 結構 ===
     const card = document.createElement("div");
     card.classList.add("exercise-card");
     card.innerHTML = `
       <h3>${i + 1}. ${name}</h3>
       <p>組數：${sets}　次數：${reps}</p>
       <p>休息：${rest} 秒</p>
-      <p>重量：<span class="weight">${currentWeight}</span> kg</p>
+      <p>重量：<span class="weight">${currentWeight}</span> kg ${sourceLabel}</p>
       <div class="btn-group">
         <button class="add-btn">加重</button>
         <button class="keep-btn">維持</button>
         <button class="reduce-btn">減重</button>
       </div>
+      <canvas id="chart-${i}" height="120"></canvas>
     `;
+    container.appendChild(card);
 
+    // === 建立 Chart.js 折線圖 ===
+    const ctx = document.getElementById(`chart-${i}`);
+    const dates = Object.keys(history);
+    const weights = Object.values(history);
+
+    if (dates.length > 0) {
+      new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: dates,
+          datasets: [
+            {
+              label: "歷史重量 (kg)",
+              data: weights,
+              borderColor: "#007bff",
+              backgroundColor: "rgba(0,123,255,0.1)",
+              tension: 0.2,
+            },
+          ],
+        },
+        options: {
+          plugins: {
+            tooltip: {
+              enabled: true,
+              callbacks: {
+                label: (context) => ` ${context.parsed.y} kg`,
+              },
+            },
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: { display: true, text: "重量 (kg)" },
+            },
+          },
+        },
+      });
+    }
+
+    // === 取得按鈕與動作 ===
     const weightText = card.querySelector(".weight");
     const addBtn = card.querySelector(".add-btn");
     const keepBtn = card.querySelector(".keep-btn");
     const reduceBtn = card.querySelector(".reduce-btn");
 
-    addBtn.addEventListener("click", () => {
+    // Firestore 紀錄函式
+    async function saveWeightChange(newWeight) {
+      const today = new Date().toISOString().split("T")[0];
+      await updateDoc(userRef, {
+        [`history.${name}.${today}`]: newWeight,
+      }).catch(async () => {
+        await setDoc(
+          userRef,
+          { history: { [name]: { [today]: newWeight } } },
+          { merge: true }
+        );
+      });
+    }
+
+    // === 三個控制按鈕 ===
+    addBtn.addEventListener("click", async () => {
       currentWeight += delta;
       weightText.textContent = currentWeight.toFixed(1);
+      await saveWeightChange(currentWeight);
     });
 
-    keepBtn.addEventListener("click", () => {
-      alert(`維持目前重量 ${currentWeight.toFixed(1)} kg`);
+    keepBtn.addEventListener("click", async () => {
+      await saveWeightChange(currentWeight);
+      alert(`${name} 維持 ${currentWeight.toFixed(1)} kg`);
     });
 
-    reduceBtn.addEventListener("click", () => {
+    reduceBtn.addEventListener("click", async () => {
       currentWeight = Math.max(0, currentWeight - delta);
       weightText.textContent = currentWeight.toFixed(1);
+      await saveWeightChange(currentWeight);
     });
-
-    container.appendChild(card);
   });
 }
