@@ -35,7 +35,7 @@ goalSelect.addEventListener("change", () => {
     : `<option>無資料</option>`;
 });
 
-// 載入 Firestore 中的對應菜單
+// 載入 Firestore 對應菜單
 loadBtn.addEventListener("click", async () => {
   const goal = goalSelect.value;
   const part = partSelect.value;
@@ -56,36 +56,29 @@ loadBtn.addEventListener("click", async () => {
   const data = docSnap.data();
   const exercises = data.exercises || [];
 
-  // 👉 移除重複動作（依據訓練動作名稱）
-  const unique = [];
+  // 去除重複動作，只保留第一筆
   const seen = new Set();
+  const uniqueExercises = [];
   for (let ex of exercises) {
-    const name = ex["訓練動作"] || ex.name || "";
-    if (!seen.has(name)) {
-      unique.push(ex);
-      seen.add(name);
+    if (!seen.has(ex.name)) {
+      uniqueExercises.push(ex);
+      seen.add(ex.name);
     }
   }
 
-  renderExercises(unique);
+  renderExercises(uniqueExercises);
 });
 
 // 顯示菜單內容
 function renderExercises(exercises) {
   exerciseContainer.innerHTML = "";
   exercises.forEach((ex, idx) => {
-    // 自動尋找欄位名稱（避免 Excel 匯出中有隱藏空白）
-    const getValue = (keyword) => {
-      const key = Object.keys(ex).find(k => k.includes(keyword));
-      return key ? ex[key] : "";
-    };
-
-    const name = getValue("訓練動作") || "未知動作";
-    const sets = getValue("組數") || "？";
-    const reps = getValue("次數") || "？";
-    const rest = getValue("休息") || "？";
-    const weight = parseFloat(getValue("重量")) || 0;
-    const delta = parseFloat(getValue("增減")) || 2.5;
+    const name = ex.name || "未知動作";
+    const sets = ex.defaultSets || "？";
+    const reps = ex.defaultReps || "？";
+    const rest = ex.restSec ? `${ex.restSec} 秒` : "？";
+    const weight = ex.defaultWeight ?? 0;
+    const delta = ex.deltaWeight ?? 2.5;
 
     const div = document.createElement("div");
     div.className = "exercise-item";
