@@ -35,7 +35,7 @@ goalSelect.addEventListener("change", () => {
     : `<option>無資料</option>`;
 });
 
-// 按下載入菜單
+// 載入 Firestore 中的對應菜單
 loadBtn.addEventListener("click", async () => {
   const goal = goalSelect.value;
   const part = partSelect.value;
@@ -54,19 +54,38 @@ loadBtn.addEventListener("click", async () => {
   }
 
   const data = docSnap.data();
-  renderExercises(data.exercises || []);
+  const exercises = data.exercises || [];
+
+  // 👉 移除重複動作（依據訓練動作名稱）
+  const unique = [];
+  const seen = new Set();
+  for (let ex of exercises) {
+    const name = ex["訓練動作"] || ex.name || "";
+    if (!seen.has(name)) {
+      unique.push(ex);
+      seen.add(name);
+    }
+  }
+
+  renderExercises(unique);
 });
 
 // 顯示菜單內容
 function renderExercises(exercises) {
   exerciseContainer.innerHTML = "";
   exercises.forEach((ex, idx) => {
-    const name = ex["訓練動作"] || ex.name || "未知動作";
-    const sets = ex["組數"] || ex.defaultSets || "？";
-    const reps = ex["次數"] || ex.defaultReps || "？";
-    const rest = ex["休息時間"] || ex.restSec || "？";
-    const weight = ex["重量(KG)"] || ex.defaultWeight || 0;
-    const delta = ex["每次增減重量"] || ex.deltaWeight || 2.5;
+    // 自動尋找欄位名稱（避免 Excel 匯出中有隱藏空白）
+    const getValue = (keyword) => {
+      const key = Object.keys(ex).find(k => k.includes(keyword));
+      return key ? ex[key] : "";
+    };
+
+    const name = getValue("訓練動作") || "未知動作";
+    const sets = getValue("組數") || "？";
+    const reps = getValue("次數") || "？";
+    const rest = getValue("休息") || "？";
+    const weight = parseFloat(getValue("重量")) || 0;
+    const delta = parseFloat(getValue("增減")) || 2.5;
 
     const div = document.createElement("div");
     div.className = "exercise-item";
@@ -85,11 +104,13 @@ function renderExercises(exercises) {
   });
 }
 
-// 調整重量
-window.adjustWeight = function(idx, weight, delta, action) {
+// 加減重量邏輯
+window.adjustWeight = function (idx, base, delta, action) {
   const span = document.getElementById(`w${idx}`);
   let current = parseFloat(span.textContent);
+  if (isNaN(current)) current = base;
   if (action === "up") current += delta;
   if (action === "down") current -= delta;
-  span.textContent = Math.max(current, 0).toFixed(1);
+  if (current < 0) current = 0;
+  span.textContent = current.toFixed(1);
 };
