@@ -202,3 +202,20 @@ const userRef = doc(db, "profiles", userId);
     });
   });
 }
+// === Firestore 紀錄每次訓練的重量 ===
+async function saveWeightChange(newWeight) {
+  const today = new Date().toISOString().split("T")[0];
+  const safeName = name.replace(/[\/\[\]#$.]/g, "_"); // 避免 Firestore 字元錯誤
+
+  try {
+    await updateDoc(userRef, {
+      [`history.${safeName}.${today}`]: newWeight,
+    });
+  } catch (error) {
+    await setDoc(
+      userRef,
+      { history: { [safeName]: { [today]: newWeight } } },
+      { merge: true }
+    );
+  }
+}
