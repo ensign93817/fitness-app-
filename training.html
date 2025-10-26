@@ -1,57 +1,63 @@
-<!DOCTYPE html>
-<html lang="zh-Hant">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>訓練推薦</title>
-  <link rel="stylesheet" href="css/style.css">
-</head>
+<!doctype html>
+</div>
+<div>
+<div class="label">訓練部位</div>
+<select id="bodyPart" class="input">
+<option value="">請選擇</option>
+<option>胸+三頭</option>
+<option>背+二頭</option>
+<option>腿+核心</option>
+<option>肩</option>
+</select>
+</div>
+</div>
+<div class="mt-4">
+<button id="loadPlan" class="btn">載入菜單</button>
+<span id="loadStatus" class="help" style="margin-left:12px;"></span>
+</div>
+</section>
 
-<body>
-  <div class="container">
-    <h1>訓練推薦</h1>
 
-    <label>訓練目標</label>
-    <select id="goal">
-      <option value="">請選擇</option>
-      <option value="減脂">減脂</option>
-      <option value="增肌">增肌</option>
-      <option value="力量">力量</option>
-      <option value="耐力">耐力</option>
-    </select>
+<section id="planArea" class="card mt-6" style="display:none">
+<div class="row">
+<div>
+<h3>今日菜單 <span id="badgeGoal" class="badge"></span> <span id="badgePart" class="badge"></span></h3>
+<p class="help">從 Firestore 取得對應的動作清單，於此處記錄 <strong>組數 / 次數 / 重量</strong>。</p>
+</div>
+</div>
+<div class="mt-3">
+<table class="table" id="exerciseTable">
+<thead>
+<tr><th style="width:28%">動作</th><th>建議組</th><th>建議次</th><th>休息(秒)</th><th style="width:44%">記錄（組 × 次 × 重）</th></tr>
+</thead>
+<tbody></tbody>
+</table>
+</div>
+<div class="mt-4">
+<button id="saveWorkout" class="btn">儲存訓練紀錄</button>
+<span id="saveStatus" class="help" style="margin-left:12px;"></span>
+</div>
+</section>
 
-    <label>訓練部位</label>
-    <select id="part">
-      <option value="">請選擇</option>
-      <option value="胸">胸</option>
-      <option value="背">背</option>
-      <option value="腿">腿</option>
-      <option value="肩">肩</option>
-      <option value="手">手</option>
-      <option value="腹">腹</option>
-    </select>
 
-    <label>訓練動作</label>
-    <select id="exercise"></select>
-
-    <label>使用者回饋</label>
-    <select id="feedback">
-      <option value="">請選擇</option>
-      <option value="太輕鬆">太輕鬆</option>
-      <option value="剛剛好">剛剛好</option>
-      <option value="太吃力">太吃力</option>
-    </select>
-
-    <button id="generate">產生建議</button>
-    <div id="result"></div>
-  </div>
-
-  <!-- ❌ 移除舊版 firebase script -->
-  <!-- ✅ 改用 type="module" -->
-  <script type="module" src="js/training.js"></script>
-</body>
-</html>
-
-<script type="module" src="js/training.js"></script>
+<section id="feedbackArea" class="card mt-6" style="display:none">
+<h3>訓後回饋</h3>
+<div class="row">
+<div>
+<div class="label">回饋</div>
+<select id="feedback" class="input">
+<option value="">請選擇</option>
+<option>太簡單</option>
+<option>剛好</option>
+<option>太難</option>
+</select>
+</div>
+</div>
+<div class="mt-4">
+<button id="submitFeedback" class="btn secondary">提交回饋</button>
+<span id="fbStatus" class="help" style="margin-left:12px;"></span>
+</div>
+</section>
+</main>
 </body>
 </html>
