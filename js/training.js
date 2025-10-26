@@ -1,126 +1,108 @@
-import { getDb, collection, getDocs, doc, getDoc } from "./firebase.js";
+// ================================
+//  fitness-app: training.js (新版)
+// ================================
 
-const db = getDb();
+// Firestore 初始化（確保已引入 Firebase SDK）
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js";
+import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "你的 API Key",
+  authDomain: "你的專案.firebaseapp.com",
+  projectId: "你的專案 ID",
+  storageBucket: "你的專案.appspot.com",
+  messagingSenderId: "你的 senderId",
+  appId: "你的 appId"
+};
+
+// 初始化 Firebase
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// ---------------------------
+// DOM 元素
+// ---------------------------
 const goalSelect = document.getElementById("goalSelect");
 const partSelect = document.getElementById("partSelect");
 const loadBtn = document.getElementById("loadBtn");
 const exerciseContainer = document.getElementById("exerciseContainer");
 
-let allMenus = [];
-
-// 初始化 Firestore 資料
-async function loadMenus() {
-  const querySnapshot = await getDocs(collection(db, "menus"));
-  allMenus = [];
-  querySnapshot.forEach((docSnap) => {
-    const data = docSnap.data();
-    if (data.goal && data.bodyPart) allMenus.push({ id: docSnap.id, ...data });
-  });
-
-  const goals = [...new Set(allMenus.map(m => m.goal))];
-  goalSelect.innerHTML =
-    `<option value="">請選擇目標</option>` +
-    goals.map(g => `<option value="${g}">${g}</option>`).join("");
-}
-loadMenus();
-
-// 根據目標更新部位選單
-goalSelect.addEventListener("change", () => {
-  const selectedGoal = goalSelect.value;
-  const parts = [
-    ...new Set(allMenus.filter(m => m.goal === selectedGoal).map(m => m.bodyPart))
-  ];
-  partSelect.innerHTML = parts.length
-    ? parts.map(p => `<option value="${p}">${p}</option>`).join("")
-    : `<option>無資料</option>`;
-});
-
-// 載入 Firestore 對應菜單
+// ---------------------------
+// 事件：載入菜單
+// ---------------------------
 loadBtn.addEventListener("click", async () => {
-  const goal = goalSelect.value;
-  const part = partSelect.value;
+  const goal = goalSelect.value.trim();
+  const part = partSelect.value.trim();
+
   if (!goal || !part) {
-    exerciseContainer.innerHTML = "<p>⚠️ 請先選擇目標與部位</p>";
+    exerciseContainer.innerHTML = "<p>⚠️ 請先選擇訓練目標與部位</p>";
     return;
   }
 
   const key = `${goal}_${part}`;
+  console.log("🔍 查找文件：", key);
+
   const docRef = doc(db, "menus", key);
   const docSnap = await getDoc(docRef);
 
   if (!docSnap.exists()) {
-    exerciseContainer.innerHTML = `<p>❌ 找不到 ${key} 的菜單</p>`;
+    exerciseContainer.innerHTML = `<p>❌ 找不到菜單：${key}</p>`;
     return;
   }
 
   const data = docSnap.data();
-  const exercises = data.exercises || [];
+  if (!data.exercises || !Array.isArray(data.exercises)) {
+    exerciseContainer.innerHTML = "<p>⚠️ 此菜單資料不完整</p>";
+    return;
+  }
 
-  renderExercises(exercises);
+  renderExercises(data.exercises);
 });
 
-
-// 顯示菜單內容
+// ---------------------------
+// 顯示訓練動作
+// ---------------------------
 function renderExercises(exercises) {
   exerciseContainer.innerHTML = "";
+  exercises.forEach((ex, i) => {
+    const name = ex.name || "未命名動作";
+    const reps = ex.defaultReps || "?";
+    const sets = ex.defaultSets || "?";
+    const rest = ex.restSec || "?";
+    const delta = ex.deltaWeight ?? 0;
+    let weight = ex.defaultWeight ?? 0;
 
-  // 以「第一次」那一筆設定初始重量
-  const firstSet = exercises.find(ex => ex["使用者反應"] === "第一次");
-
-  // 分組顯示不同動作
-  const grouped = {};
-  exercises.forEach(ex => {
-    if (!grouped[ex["訓練動作"]] && ex["使用者反應"] === "第一次") {
-      grouped[ex["訓練動作"]] = {
-        name: ex["訓練動作"],
-        sets: ex["組數"],
-        reps: ex["次數"],
-        rest: ex["休息時間"],
-        baseWeight: parseFloat(ex["重量(KG)"]) || 0,
-        delta: parseFloat(ex["每次增減重量量(KG)"]) || 2.5,
-      };
-    }
-  });
-
-  const actions = Object.values(grouped);
-
-  actions.forEach((act, idx) => {
+    // 每個動作的卡片
     const div = document.createElement("div");
-    div.className = "exercise-item";
+    div.classList.add("exercise-card");
     div.innerHTML = `
-      <h3>${idx + 1}. ${act.name}</h3>
-      <p>組數：${act.sets}　次數：${act.reps}　休息：${act.rest}</p>
-      <p>目前重量：<span id="w${idx}">${act.baseWeight}</span> kg</p>
-      <p id="r${idx}" style="color:gray;">系統反應：等待使用者選擇</p>
+      <h3>${i + 1}. ${name}</h3>
+      <p>組數：${sets}　次數：${reps}</p>
+      <p>休息：${rest} 秒</p>
+      <p id="weight-${i}">重量：${weight} kg</p>
       <div class="btn-group">
-        <button onclick="adjustWeight(${idx}, ${act.baseWeight}, ${act.delta}, 'up')">加重</button>
-        <button onclick="adjustWeight(${idx}, ${act.baseWeight}, ${act.delta}, 'same')">維持</button>
-        <button onclick="adjustWeight(${idx}, ${act.baseWeight}, ${act.delta}, 'down')">減重</button>
+        <button class="add-btn">加重</button>
+        <button class="keep-btn">維持</button>
+        <button class="reduce-btn">減重</button>
       </div>
-      <hr/>
     `;
+
+    // 三個控制按鈕
+    div.querySelector(".add-btn").addEventListener("click", () => {
+      weight += delta;
+      document.getElementById(`weight-${i}`).innerText = `重量：${weight} kg`;
+    });
+
+    div.querySelector(".keep-btn").addEventListener("click", () => {
+      document.getElementById(`weight-${i}`).innerText = `重量：${weight} kg（維持）`;
+    });
+
+    div.querySelector(".reduce-btn").addEventListener("click", () => {
+      weight -= delta;
+      if (weight < 0) weight = 0;
+      document.getElementById(`weight-${i}`).innerText = `重量：${weight} kg`;
+    });
+
     exerciseContainer.appendChild(div);
   });
 }
-
-// 加減重量邏輯 + 顯示系統反應
-window.adjustWeight = function (idx, base, delta, action) {
-  const span = document.getElementById(`w${idx}`);
-  const react = document.getElementById(`r${idx}`);
-
-  let current = parseFloat(span.textContent);
-  if (isNaN(current)) current = base;
-
-  if (action === "up") {
-    current += delta;
-    react.textContent = "系統反應：加重量";
-  } else if (action === "down") {
-    current -= delta;
-    react.textContent = "系統反應：減少重量";
-  } else {
-    react.textContent = "系統反應：保持重量";
-  }
-
-  if (current < 0) current = 0;
-  span.textContent = current.toFixed(1);
-};
