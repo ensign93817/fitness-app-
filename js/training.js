@@ -72,13 +72,21 @@ loadBtn.addEventListener("click", async () => {
 // 顯示菜單內容
 function renderExercises(exercises) {
   exerciseContainer.innerHTML = "";
+
   exercises.forEach((ex, idx) => {
     const name = ex.name || "未知動作";
     const sets = ex.defaultSets || "？";
     const reps = ex.defaultReps || "？";
-    const rest = ex.restSec ? `${ex.restSec} 秒` : "？";
-    const weight = ex.defaultWeight ?? 0;
-    const delta = ex.deltaWeight ?? 2.5;
+    const rest =
+      typeof ex.restSec === "number"
+        ? `${ex.restSec} 秒`
+        : ex.restSec
+        ? ex.restSec
+        : "？";
+    const weight =
+      typeof ex.defaultWeight === "number" ? ex.defaultWeight : 0;
+    const delta =
+      typeof ex.deltaWeight === "number" ? ex.deltaWeight : 2.5;
 
     const div = document.createElement("div");
     div.className = "exercise-item";
