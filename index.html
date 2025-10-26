@@ -1,49 +1,103 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Fitness App — 首頁</title>
-<link rel="stylesheet" href="./css/style.css" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>健身訓練推薦系統 | Fitness App</title>
+  <link rel="stylesheet" href="./css/style.css" />
+  <style>
+    body {
+      font-family: "Noto Sans TC", sans-serif;
+      background-color: #fafafa;
+      color: #222;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background-color: #fff;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      padding: 15px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    header h1 {
+      font-size: 20px;
+      color: #333;
+    }
+    main {
+      max-width: 800px;
+      margin: 40px auto;
+      background-color: #fff;
+      padding: 40px;
+      border-radius: 16px;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+    }
+    h2 {
+      color: #222;
+      margin-bottom: 10px;
+    }
+    p {
+      line-height: 1.8;
+      margin-bottom: 15px;
+    }
+    ul {
+      padding-left: 20px;
+    }
+    .button-group {
+      display: flex;
+      gap: 20px;
+      margin-top: 25px;
+    }
+    .btn-link {
+      text-decoration: none;
+      display: inline-block;
+      padding: 12px 28px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      color: white;
+      background-color: #007bff;
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+      transition: all 0.2s;
+    }
+    .btn-link:hover {
+      background-color: #0056d2;
+      transform: translateY(-2px);
+    }
+    footer {
+      text-align: center;
+      margin-top: 60px;
+      font-size: 14px;
+      color: #666;
+    }
+  </style>
 </head>
 <body>
-<nav class="nav">
-<div class="inner">
-<div class="brand">🏋️‍♀️ Fitness App</div>
-<div style="flex:1"></div>
-<a href="./index.html">首頁</a>
-<a href="./profile.html">建立個人資料</a>
-<a href="./training.html">訓練推薦</a>
-<a href="./uploadMenus.html" title="管理員">管理員</a>
-</div>
-</nav>
+  <header>
+    <h1>🏋️‍♂️ Fitness App</h1>
+  </header>
 
+  <main>
+    <h2>健身訓練推薦系統</h2>
+    <p>白底、簡潔、以「先選目標＋部位 → 讀取菜單 → 紀錄訓練 → 訓後回饋」為核心流程。</p>
 
-<main class="container">
-<section class="card">
-<h1>健身訓練推薦系統</h1>
-<p class="help">白底、簡潔、以「先選目標＋部位 → 顯示菜單 → 記錄訓練 → 訓後回饋」為核心流程。</p>
-<div class="mt-4 row">
-<div>
-<h3>訓練原則</h3>
-<ul>
-<li>優先複合動作、逐步超負荷。</li>
-<li>明確紀錄組數 × 次數 × 重量。</li>
-<li>訓練後填寫回饋以優化下一次推薦。</li>
-</ul>
-</div>
-<div>
-<h3>快速開始</h3>
-<p><a class="btn" href="./profile.html">建立個人資料</a></p>
-<p class="mt-2"><a class="btn secondary" href="./training.html">前往訓練推薦</a></p>
-</div>
-</div>
-</section>
-</main>
+    <h3>訓練原則</h3>
+    <ul>
+      <li>優先複合動作，逐步超負荷。</li>
+      <li>明確記錄組數 × 次數 × 重量。</li>
+      <li>訓練後填寫回饋以優化下一次推薦。</li>
+    </ul>
 
+    <div class="button-group">
+      <a href="./profile.html" class="btn-link">建立個人資料</a>
+      <a href="./training.html" class="btn-link">前往訓練推薦</a>
+      <a href="./uploadMenus.html" class="btn-link">管理員菜單上傳</a>
+    </div>
+  </main>
 
-<footer>
-<div class="container">© 2025 Fitness App</div>
-</footer>
+  <footer>
+    © 2025 Fitness App
+  </footer>
 </body>
 </html>
