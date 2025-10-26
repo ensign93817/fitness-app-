@@ -84,8 +84,6 @@ function displayExercises(exercises) {
     const reps = ex.defaultReps || ex["次數"] || "8–12";
     const sets = ex.defaultSets || ex["組數"] || "3–4";
     const rest = ex.restSec || ex["休息時間"] || 75;
-    const baseWeight = Number(ex.defaultWeight || ex["重量(KG)"] || 0);
-    const delta = Number(ex.deltaWeight || ex["每次增減重量量(KG)"] || 2.5);
     
 // ✅ 根據目標補推薦重量
 let baseWeight = Number(ex.defaultWeight || ex["重量(KG)"]);
