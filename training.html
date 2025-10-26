@@ -1,63 +1,37 @@
 <!doctype html>
-</div>
-<div>
-<div class="label">訓練部位</div>
-<select id="bodyPart" class="input">
-<option value="">請選擇</option>
-<option>胸+三頭</option>
-<option>背+二頭</option>
-<option>腿+核心</option>
-<option>肩</option>
-</select>
-</div>
-</div>
-<div class="mt-4">
-<button id="loadPlan" class="btn">載入菜單</button>
-<span id="loadStatus" class="help" style="margin-left:12px;"></span>
-</div>
-</section>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>訓練推薦系統</title>
+  <link rel="stylesheet" href="./css/style.css" />
+  <script type="module" src="./js/training.js" defer></script>
+</head>
+<body>
+  <nav class="nav">
+    <div class="inner">
+      <div class="brand">🏋️‍♀️ Fitness App</div>
+      <div style="flex:1"></div>
+      <a href="./index.html">首頁</a>
+      <a href="./profile.html">建立個人資料</a>
+      <a href="./training.html" class="active">訓練推薦</a>
+    </div>
+  </nav>
 
+  <main class="container">
+    <h1>訓練推薦</h1>
+    <div class="selector">
+      <label>訓練目標：</label>
+      <select id="goalSelect"><option>載入中...</option></select>
+      <label>訓練部位：</label>
+      <select id="partSelect"><option>請先選目標</option></select>
+      <button id="loadBtn">載入菜單</button>
+    </div>
 
-<section id="planArea" class="card mt-6" style="display:none">
-<div class="row">
-<div>
-<h3>今日菜單 <span id="badgeGoal" class="badge"></span> <span id="badgePart" class="badge"></span></h3>
-<p class="help">從 Firestore 取得對應的動作清單，於此處記錄 <strong>組數 / 次數 / 重量</strong>。</p>
-</div>
-</div>
-<div class="mt-3">
-<table class="table" id="exerciseTable">
-<thead>
-<tr><th style="width:28%">動作</th><th>建議組</th><th>建議次</th><th>休息(秒)</th><th style="width:44%">記錄（組 × 次 × 重）</th></tr>
-</thead>
-<tbody></tbody>
-</table>
-</div>
-<div class="mt-4">
-<button id="saveWorkout" class="btn">儲存訓練紀錄</button>
-<span id="saveStatus" class="help" style="margin-left:12px;"></span>
-</div>
-</section>
-
-
-<section id="feedbackArea" class="card mt-6" style="display:none">
-<h3>訓後回饋</h3>
-<div class="row">
-<div>
-<div class="label">回饋</div>
-<select id="feedback" class="input">
-<option value="">請選擇</option>
-<option>太簡單</option>
-<option>剛好</option>
-<option>太難</option>
-</select>
-</div>
-</div>
-<div class="mt-4">
-<button id="submitFeedback" class="btn secondary">提交回饋</button>
-<span id="fbStatus" class="help" style="margin-left:12px;"></span>
-</div>
-</section>
-</main>
+    <section id="exerciseList" class="card" style="margin-top:20px;">
+      <h2>訓練菜單</h2>
+      <div id="exerciseContainer"></div>
+    </section>
+  </main>
 </body>
 </html>
