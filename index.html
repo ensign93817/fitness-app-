@@ -1,62 +1,49 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>健身推薦系統｜首頁</title>
-  <link rel="stylesheet" href="css/style.css">
-  <style>
-    body {
-      background-color: #111;
-      color: white;
-      font-family: "Microsoft JhengHei", sans-serif;
-      text-align: center;
-      margin: 0;
-      padding: 0;
-    }
-
-    .container {
-      margin-top: 100px;
-    }
-
-    h1 {
-      color: #00ff99;
-      margin-bottom: 20px;
-    }
-
-    p {
-      width: 80%;
-      margin: 0 auto 20px;
-      line-height: 1.8;
-      color: #ccc;
-    }
-
-    .btn {
-      display: inline-block;
-      background-color: #00ff99;
-      color: #000;
-      font-weight: bold;
-      border: none;
-      padding: 15px 30px;
-      border-radius: 8px;
-      text-decoration: none;
-      transition: 0.3s;
-    }
-
-    .btn:hover {
-      background-color: #00cc7a;
-    }
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Fitness App — 首頁</title>
+<link rel="stylesheet" href="./css/style.css" />
 </head>
 <body>
-  <div class="container">
-    <h1>健身推薦系統</h1>
-    <p>
-      想開始健身卻不知道從哪裡下手？  
-      本系統將依據你的個人資料與訓練目標，為你產生專屬的訓練建議。  
-      無論是增肌、減脂還是提升力量，都能幫助你更有效率地達成目標！
-    </p>
-    <a href="profile.html" class="btn">建立個人資料</a>
-  </div>
+<nav class="nav">
+<div class="inner">
+<div class="brand">🏋️‍♀️ Fitness App</div>
+<div style="flex:1"></div>
+<a href="./index.html">首頁</a>
+<a href="./profile.html">建立個人資料</a>
+<a href="./training.html">訓練推薦</a>
+<a href="./uploadMenus.html" title="管理員">管理員</a>
+</div>
+</nav>
+
+
+<main class="container">
+<section class="card">
+<h1>健身訓練推薦系統</h1>
+<p class="help">白底、簡潔、以「先選目標＋部位 → 顯示菜單 → 記錄訓練 → 訓後回饋」為核心流程。</p>
+<div class="mt-4 row">
+<div>
+<h3>訓練原則</h3>
+<ul>
+<li>優先複合動作、逐步超負荷。</li>
+<li>明確紀錄組數 × 次數 × 重量。</li>
+<li>訓練後填寫回饋以優化下一次推薦。</li>
+</ul>
+</div>
+<div>
+<h3>快速開始</h3>
+<p><a class="btn" href="./profile.html">建立個人資料</a></p>
+<p class="mt-2"><a class="btn secondary" href="./training.html">前往訓練推薦</a></p>
+</div>
+</div>
+</section>
+</main>
+
+
+<footer>
+<div class="container">© 2025 Fitness App</div>
+</footer>
 </body>
 </html>
