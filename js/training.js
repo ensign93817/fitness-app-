@@ -61,19 +61,24 @@ function displayExercises(exercises) {
     return;
   }
 
-  // ✅ 根據動作名稱去重（只保留第一筆）
-  const uniqueExercises = [];
-  const seen = new Set();
-
+  // ✅ 去重：若重複動作，保留「第一筆有重量資料」的版本
+  const uniqueMap = new Map();
   exercises.forEach(ex => {
     const name = ex.name || ex["訓練動作"] || "未命名動作";
-    if (!seen.has(name)) {
-      seen.add(name);
-      uniqueExercises.push(ex);
+    const weight = Number(ex.defaultWeight || ex["重量(KG)"] || 0);
+    if (!uniqueMap.has(name)) {
+      uniqueMap.set(name, ex);
+    } else {
+      const saved = uniqueMap.get(name);
+      if ((!saved.defaultWeight || saved.defaultWeight === 0) && weight > 0) {
+        uniqueMap.set(name, ex);
+      }
     }
   });
 
-  // ✅ 顯示所有（去重後）訓練項目
+  const uniqueExercises = Array.from(uniqueMap.values());
+
+  // ✅ 顯示卡片
   uniqueExercises.forEach((ex, i) => {
     const name = ex.name || ex["訓練動作"] || "未命名動作";
     const reps = ex.defaultReps || ex["次數"] || "8–12";
