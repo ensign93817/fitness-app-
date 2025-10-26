@@ -1,48 +1,58 @@
-<nav style="text-align: center; margin-top: 20px;">
-  <a href="index.html" style="color:#00ff99; margin: 0 10px;">🏠 首頁</a>
-  <a href="training.html" style="color:#00ff99; margin: 0 10px;">💪 訓練推薦</a>
-</nav>
-
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>建立個人資料</title>
-  <link rel="stylesheet" href="css/style.css">
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>建立個人資料</title>
+<link rel="stylesheet" href="./css/style.css" />
+<script type="module" src="./js/profile.js" defer></script>
 </head>
 <body>
-  <nav>
-    <a href="index.html">首頁</a>
-    <a href="training.html">訓練推薦</a>
-  </nav>
-
-  <div class="container">
-    <h2>建立個人資料</h2>
-    <form id="profileForm">
-      <label for="gender">性別</label>
-      <select id="gender" required>
-        <option value="">請選擇</option>
-        <option value="男">男</option>
-        <option value="女">女</option>
-      </select>
-
-      <label for="age">年齡</label>
-      <input type="number" id="age" placeholder="請輸入年齡" required>
-
-      <label for="height">身高 (cm)</label>
-      <input type="number" id="height" placeholder="請輸入身高" required>
-
-      <label for="weight">體重 (kg)</label>
-      <input type="number" id="weight" placeholder="請輸入體重" required>
-
-      <button type="submit">儲存資料</button>
-    </form>
-  </div>
-
-<script type="module" src="js/firebase.js"></script>
-<script type="module" src="js/profile.js"></script>
+<nav class="nav">
+<div class="inner">
+<div class="brand">🏋️‍♀️ Fitness App</div>
+<div style="flex:1"></div>
+<a href="./index.html">首頁</a>
+<a href="./profile.html">建立個人資料</a>
+<a href="./training.html">訓練推薦</a>
+<a href="./uploadMenus.html" title="管理員">管理員</a>
+</div>
+</nav>
+<main class="container">
+<h1>建立個人資料</h1>
+<p class="help">此頁僅做資料蒐集與顯示，不參與同頁面的推薦決策（符合你的邏輯）。</p>
+<form id="profileForm" class="card">
+<div class="row">
+<div>
+<div class="label">性別</div>
+<select name="gender" class="input" required>
+<option value="">請選擇</option>
+<option value="male">男</option>
+<option value="female">女</option>
+</select>
+</div>
+<div>
+<div class="label">年齡</div>
+<input class="input" type="number" name="age" min="10" max="100" required />
+</div>
+</div>
+<div class="row mt-3">
+<div>
+<div class="label">身高 (cm)</div>
+<input class="input" type="number" name="height" step="0.1" min="100" max="250" required />
+</div>
+<div>
+<div class="label">體重 (kg)</div>
+<input class="input" type="number" name="weight" step="0.1" min="30" max="250" required />
+</div>
+</div>
+<div class="mt-4">
+<button class="btn" type="submit">儲存資料</button>
+<span id="saveStatus" class="help" style="margin-left:12px;"></span>
+</div>
+</form>
+</main>
+</body>
+</html>
 </body>
 </html>
