@@ -59,6 +59,7 @@ loadBtn.addEventListener("click", async () => {
   renderExercises(exercises);
 });
 
+
 // 顯示菜單內容
 function renderExercises(exercises) {
   exerciseContainer.innerHTML = "";
