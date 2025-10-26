@@ -86,13 +86,15 @@ function displayExercises(exercises) {
     const rest = ex.restSec || ex["休息時間"] || 75;
     const baseWeight = Number(ex.defaultWeight || ex["重量(KG)"] || 0);
     const delta = Number(ex.deltaWeight || ex["每次增減重量量(KG)"] || 2.5);
-    // 根據目標補推薦重量
+    
+// ✅ 根據目標補推薦重量
 let baseWeight = Number(ex.defaultWeight || ex["重量(KG)"]);
 if (!baseWeight || baseWeight === 0) {
-  if (goalSelect.value === "增肌") baseWeight = 30;
-  else if (goalSelect.value === "力量") baseWeight = 40;
-  else if (goalSelect.value === "減脂") baseWeight = 20;
-  else if (goalSelect.value === "耐力") baseWeight = 15;
+  const goal = goalSelect.value; // 從選單抓訓練目標
+  if (goal === "增肌") baseWeight = 30;
+  else if (goal === "力量") baseWeight = 40;
+  else if (goal === "減脂") baseWeight = 20;
+  else if (goal === "耐力") baseWeight = 15;
   else baseWeight = 25;
 }
 
