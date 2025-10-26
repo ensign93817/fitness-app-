@@ -1,55 +1,39 @@
 <!doctype html>
 <html lang="zh-Hant">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>上傳菜單（管理員）</title>
-<link rel="stylesheet" href="./css/style.css" />
-<script type="module" src="./js/uploadMenus.js" defer></script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>上傳菜單（管理員）</title>
+  <link rel="stylesheet" href="./css/style.css" />
+  <script type="module" src="./js/uploadMenus.js" defer></script>
 </head>
 <body>
-<nav class="nav">
-<div class="inner">
-<div class="brand">🏋️‍♀️ Fitness App</div>
-<div style="flex:1"></div>
-<a href="./index.html">首頁</a>
-<a href="./profile.html">建立個人資料</a>
-<a href="./training.html">訓練推薦</a>
-<a href="./uploadMenus.html" title="管理員">管理員</a>
-</div>
-</nav>
-<main class="container">
-<h1>上傳菜單（管理員）</h1>
-<p class="help">支援兩種 JSON 形狀（見下）。系統會寫入 <code>menus/{goal}_{bodyPart}</code>。</p>
+  <nav class="nav">
+    <div class="inner">
+      <div class="brand">🏋️‍♀️ Fitness App 管理員</div>
+      <div style="flex:1"></div>
+      <a href="./index.html">首頁</a>
+      <a href="./profile.html">建立個人資料</a>
+      <a href="./training.html">訓練推薦</a>
+      <a href="./uploadMenus.html" class="active">管理員</a>
+    </div>
+  </nav>
 
+  <main class="container">
+    <h1>📦 批次上傳 JSON / ZIP</h1>
+    <p class="help">
+      你可以選擇：<br>
+      ・單一 JSON 檔案<br>
+      ・或整包 ZIP（內含多個 JSON，如增肌_胸部.json 等）<br>
+      系統會自動辨識並上傳到 Firestore「menus」集合。
+    </p>
 
-<section class="card">
-<input type="file" id="file" accept="application/json" />
-<button id="uploadBtn" class="btn mt-3">上傳到 Firestore</button>
-<div class="mt-2 help" id="status"></div>
-</section>
-
-
-<section class="mt-6">
-<h3>JSON 形狀 A：分組（建議）</h3>
-<pre class="card" style="overflow:auto;">
-{
-"goal": "增肌",
-"bodyPart": "胸+三頭",
-"exercises": [
-{ "name": "仰臥推舉", "defaultSets": 4, "defaultReps": 10, "restSec": 90 },
-{ "name": "上斜啞鈴推舉", "defaultSets": 3, "defaultReps": 12, "restSec": 90 }
-]
-}
-</pre>
-<h3>JSON 形狀 B：扁平列（會自動 groupBy）</h3>
-<pre class="card" style="overflow:auto;">
-[
-{ "goal":"增肌", "bodyPart":"胸+三頭", "name":"仰臥推舉", "defaultSets":4, "defaultReps":10, "restSec":90 },
-{ "goal":"增肌", "bodyPart":"胸+三頭", "name":"上斜啞鈴推舉", "defaultSets":3, "defaultReps":12, "restSec":90 }
-]
-</pre>
-</section>
-</main>
+    <section class="card">
+      <input type="file" id="file" accept=".json,.zip" />
+      <button id="uploadBtn" class="btn mt-3">上傳到 Firestore</button>
+      <div id="status" class="help mt-3"></div>
+      <ul id="uploadList" class="help" style="margin-top:12px;line-height:1.6;"></ul>
+    </section>
+  </main>
 </body>
 </html>
