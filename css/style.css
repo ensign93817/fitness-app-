@@ -26,3 +26,13 @@ border-bottom:1px solid var(--line);
 .badge{display:inline-block;padding:4px 10px;border-radius:999px;background:#ecfdf5;color:#065f46;font-weight:700;font-size:12px}
 .help{color:var(--muted);font-size:13px}
 footer{border-top:1px solid var(--line);padding:24px 0;margin-top:48px;color:var(--muted);}
+.exercise-item { margin-bottom: 1.2em; }
+.btn-group button {
+  margin-right: 6px;
+  background: #3b7ddd;
+  color: white;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 5px;
+}
+.btn-group button:hover { background: #285bb5; }
