@@ -1,18 +1,39 @@
-import { db } from "./firebase.js";
-import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+// ======== Firebase 初始化 ========
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import {
+  getFirestore,
+  doc,
+  getDoc
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+// ✅ 你的 Firebase 設定（請用你自己的專案設定替換）
+const firebaseConfig = {
+ apiKey: "AIzaSyBur0DoRPT0csPqtyDSOQBYMjlGaqf3EB0",
+  authDomain: "fitness-guide-9a8f3.firebaseapp.com",
+  projectId: "fitness-guide-9a8f3",
+  storageBucket: "fitness-guide-9a8f3.firebasestorage.app",
+  messagingSenderId: "969288112649",
+  appId: "1:969288112649:web:58b5b807c410388b1836d8",
+  measurementId: "G-7X1L324K0Q"
+};
+
+// 初始化 Firebase
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// ======== DOM 元素 ========
 const goalSelect = document.getElementById("goalSelect");
 const partSelect = document.getElementById("partSelect");
 const loadBtn = document.getElementById("loadBtn");
 const container = document.getElementById("exerciseContainer");
 
-// 載入 Firestore 資料
+// ======== 載入按鈕事件 ========
 loadBtn.addEventListener("click", async () => {
   const goal = goalSelect.value.trim();
   const part = partSelect.value.trim();
 
   if (!goal || !part) {
-    alert("請選擇訓練目標與部位！");
+    alert("請選擇訓練目標與訓練部位！");
     return;
   }
 
@@ -27,18 +48,19 @@ loadBtn.addEventListener("click", async () => {
       const data = docSnap.data();
       displayExercises(data.exercises);
     } else {
-      container.innerHTML = `<p>找不到相應的訓練菜單。</p>`;
+      container.innerHTML = `<p>⚠️ 找不到此組合的訓練菜單。</p>`;
     }
   } catch (error) {
-    console.error("❌ 讀取 Firestore 發生錯誤：", error);
+    console.error("❌ Firestore 讀取錯誤：", error);
+    container.innerHTML = `<p>❌ 無法載入資料，請稍後再試。</p>`;
   }
 });
 
-// 顯示訓練菜單
+// ======== 顯示訓練菜單 ========
 function displayExercises(exercises) {
   container.innerHTML = "";
 
-  // 只保留「第一次」且不重複名稱
+  // 只保留「第一次」的紀錄並移除重複動作
   const uniqueExercises = Array.from(
     new Map(
       exercises
@@ -48,7 +70,7 @@ function displayExercises(exercises) {
   );
 
   if (uniqueExercises.length === 0) {
-    container.innerHTML = `<p>沒有可用的訓練項目。</p>`;
+    container.innerHTML = `<p>⚠️ 沒有可用的訓練項目。</p>`;
     return;
   }
 
@@ -56,8 +78,8 @@ function displayExercises(exercises) {
     const card = document.createElement("div");
     card.classList.add("exercise-card");
 
-    let currentWeight = ex["重量(KG)"] || 0;
-    const delta = ex["每次增減重量量(KG)"] || 0;
+    let currentWeight = Number(ex["重量(KG)"]) || 0;
+    const delta = Number(ex["每次增減重量量(KG)"]) || 0;
     const sets = ex["組數"] || "3到4";
     const reps = ex["次數"] || "8到12";
     const rest = ex["休息時間"] || "75 秒";
@@ -74,16 +96,22 @@ function displayExercises(exercises) {
       </div>
     `;
 
-    // 綁定按鈕
+    // === 加減重邏輯 ===
     const weightSpan = card.querySelector(".weight");
-    card.querySelector(".add-btn").addEventListener("click", () => {
+    const addBtn = card.querySelector(".add-btn");
+    const keepBtn = card.querySelector(".keep-btn");
+    const reduceBtn = card.querySelector(".reduce-btn");
+
+    addBtn.addEventListener("click", () => {
       currentWeight += delta;
       weightSpan.textContent = currentWeight;
     });
-    card.querySelector(".keep-btn").addEventListener("click", () => {
-      alert(`維持 ${currentWeight} kg`);
+
+    keepBtn.addEventListener("click", () => {
+      alert(`維持目前重量 ${currentWeight} kg`);
     });
-    card.querySelector(".reduce-btn").addEventListener("click", () => {
+
+    reduceBtn.addEventListener("click", () => {
       currentWeight -= delta;
       if (currentWeight < 0) currentWeight = 0;
       weightSpan.textContent = currentWeight;
