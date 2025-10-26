@@ -61,11 +61,24 @@ function displayExercises(exercises) {
     return;
   }
 
-  exercises.forEach((ex, i) => {
+  // ✅ 根據動作名稱去重（只保留第一筆）
+  const uniqueExercises = [];
+  const seen = new Set();
+
+  exercises.forEach(ex => {
+    const name = ex.name || ex["訓練動作"] || "未命名動作";
+    if (!seen.has(name)) {
+      seen.add(name);
+      uniqueExercises.push(ex);
+    }
+  });
+
+  // ✅ 顯示所有（去重後）訓練項目
+  uniqueExercises.forEach((ex, i) => {
     const name = ex.name || ex["訓練動作"] || "未命名動作";
     const reps = ex.defaultReps || ex["次數"] || "8–12";
     const sets = ex.defaultSets || ex["組數"] || "3–4";
-    const rest = ex.restSec || ex["休息時間"] || "60–90 秒";
+    const rest = ex.restSec || ex["休息時間"] || 75;
     const baseWeight = Number(ex.defaultWeight || ex["重量(KG)"] || 0);
     const delta = Number(ex.deltaWeight || ex["每次增減重量量(KG)"] || 2.5);
     let currentWeight = baseWeight;
