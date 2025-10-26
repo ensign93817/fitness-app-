@@ -3,19 +3,104 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>訓練推薦</title>
+  <title>訓練推薦 | Fitness App</title>
   <link rel="stylesheet" href="./css/style.css" />
+  <style>
+    body {
+      font-family: "Microsoft JhengHei", sans-serif;
+      background-color: #fafafa;
+      margin: 0;
+      padding: 0;
+    }
+    .nav {
+      background-color: #fff;
+      border-bottom: 1px solid #ddd;
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .nav .brand {
+      font-weight: 600;
+      font-size: 20px;
+    }
+    .nav a {
+      text-decoration: none;
+      color: #444;
+      margin-left: 16px;
+    }
+    .nav a.active {
+      color: #198754;
+      font-weight: bold;
+    }
+    .container {
+      max-width: 900px;
+      margin: 40px auto;
+      background: #fff;
+      padding: 32px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    .selector {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      margin-bottom: 24px;
+    }
+    select, button {
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    #exerciseContainer {
+      margin-top: 20px;
+    }
+    .exercise-card {
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 16px;
+      background: #fdfdfd;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .exercise-card h3 {
+      margin-top: 0;
+      color: #333;
+    }
+    .btn-group {
+      margin-top: 10px;
+    }
+    .btn-group button {
+      margin-right: 8px;
+      border: none;
+      border-radius: 6px;
+      padding: 6px 12px;
+      cursor: pointer;
+      color: #fff;
+      font-weight: bold;
+    }
+    .add-btn { background-color: #28a745; }
+    .keep-btn { background-color: #007bff; }
+    .reduce-btn { background-color: #dc3545; }
+    .add-btn:hover { background-color: #218838; }
+    .keep-btn:hover { background-color: #0069d9; }
+    .reduce-btn:hover { background-color: #c82333; }
+  </style>
   <script type="module" src="./js/training.js" defer></script>
 </head>
+
 <body>
   <nav class="nav">
-    <div class="inner">
-      <div class="brand">🏋️ Fitness App</div>
-      <div class="links">
-        <a href="./index.html">首頁</a>
-        <a href="./profile.html">建立個人資料</a>
-        <a href="./training.html" class="active">訓練推薦</a>
-      </div>
+    <div class="brand">🏋️ Fitness App</div>
+    <div class="links">
+      <a href="./index.html">首頁</a>
+      <a href="./profile.html">建立個人資料</a>
+      <a href="./training.html" class="active">訓練推薦</a>
     </div>
   </nav>
 
@@ -23,14 +108,16 @@
     <h1>訓練推薦</h1>
 
     <div class="selector">
-      <label>訓練目標：</label>
+      <label for="goalSelect">訓練目標：</label>
       <select id="goalSelect">
         <option value="">請選擇</option>
         <option value="增肌">增肌</option>
         <option value="力量">力量</option>
+        <option value="減脂">減脂</option>
+        <option value="耐力">耐力</option>
       </select>
 
-      <label>訓練部位：</label>
+      <label for="partSelect">訓練部位：</label>
       <select id="partSelect">
         <option value="">請選擇</option>
         <option value="胸部">胸部</option>
@@ -45,8 +132,8 @@
       <button id="loadBtn">載入菜單</button>
     </div>
 
-    <section id="exerciseList" class="card" style="margin-top:20px;">
-      <h2>訓練菜單</h2>
+    <section id="exerciseList">
+      <h2 style="text-align:center;">訓練菜單</h2>
       <div id="exerciseContainer"></div>
     </section>
   </main>
