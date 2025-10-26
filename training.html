@@ -1,37 +1,39 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="zh-Hant">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>訓練推薦系統</title>
-  <link rel="stylesheet" href="./css/style.css" />
-  <script type="module" src="./js/training.js" defer></script>
-</head>
-<body>
-  <nav class="nav">
-    <div class="inner">
-      <div class="brand">🏋️‍♀️ Fitness App</div>
-      <div style="flex:1"></div>
-      <a href="./index.html">首頁</a>
-      <a href="./profile.html">建立個人資料</a>
-      <a href="./training.html" class="active">訓練推薦</a>
-    </div>
-  </nav>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>訓練推薦系統 | Fitness App</title>
 
-  <main class="container">
-    <h1>訓練推薦</h1>
-    <div class="selector">
-      <label>訓練目標：</label>
-      <select id="goalSelect"><option>載入中...</option></select>
-      <label>訓練部位：</label>
-      <select id="partSelect"><option>請先選目標</option></select>
-      <button id="loadBtn">載入菜單</button>
-    </div>
+    <!-- CSS -->
+    <link rel="stylesheet" href="./css/style.css" />
 
-    <section id="exerciseList" class="card" style="margin-top:20px;">
-      <h2>訓練菜單</h2>
-      <div id="exerciseContainer"></div>
-    </section>
-  </main>
-</body>
-</html>
+    <!-- JS -->
+    <script type="module" src="./js/training.js" defer></script>
+  </head>
+  <body>
+    <!-- 導覽列 -->
+    <nav class="nav">
+      <div class="inner">
+        <div class="brand">🏋️‍♀️ Fitness App</div>
+        <div class="links">
+          <a href="./index.html">首頁</a>
+          <a href="./profile.html">建立個人資料</a>
+          <a href="./training.html" class="active">訓練推薦</a>
+        </div>
+      </div>
+    </nav>
+
+    <!-- 主體內容 -->
+    <main class="container">
+      <h1>訓練推薦</h1>
+
+      <!-- 選擇區塊 -->
+      <div class="selector">
+        <label>訓練目標：</label>
+        <select id="goalSelect">
+          <option value="">請選擇</option>
+          <option value="增肌">增肌</option>
+          <option value="減脂">減脂</option>
+          <option value="力量">力量</option>
+          <option value="耐力">耐
