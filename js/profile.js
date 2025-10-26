@@ -1,44 +1,34 @@
-// js/profile.js
-(function () {
-  const onReady = (fn) => {
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", fn, { once: true });
-    } else {
-      fn();
-    }
-  };
+import { getDb, getLocalUID, doc, setDoc } from './firebase.js';
 
-  onReady(() => {
-    const form = document.getElementById("profileForm");
-    if (!form) {
-      console.error("❌ 找不到 id='profileForm' 的表單");
-      return;
-    }
 
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
+const form = document.getElementById('profileForm');
+const statusEl = document.getElementById('saveStatus');
 
-      const gender = document.getElementById("gender").value;
-      const age    = Number(document.getElementById("age").value || 0);
-      const height = Number(document.getElementById("height").value || 0);
-      const weight = Number(document.getElementById("weight").value || 0);
 
-      try {
-        // 寫入 Firestore（先用固定 user_001）
-        await db.collection("users").doc("user_001").set({
-          gender, age, height, weight,
-          updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-        });
-
-        // 設定本地登入標記，供 index.html 判斷導頁用
-        localStorage.setItem("fitnessUserId", "user_001");
-
-        alert("✅ 已儲存，前往訓練推薦頁");
-        window.location.href = "training.html";
-      } catch (err) {
-        console.error("儲存失敗：", err);
-        alert("❌ 儲存失敗，請稍後再試");
-      }
-    });
-  });
+// 初始化：若 localStorage 有資料就填入
+(function preload(){
+const saved = JSON.parse(localStorage.getItem('profile')||'null');
+if(saved){
+for(const [k,v] of Object.entries(saved)){
+const el = form.elements.namedItem(k);
+if(el) el.value = v;
+}
+}
 })();
+
+
+form.addEventListener('submit', async (e)=>{
+e.preventDefault();
+const data = Object.fromEntries(new FormData(form).entries());
+localStorage.setItem('profile', JSON.stringify(data));
+statusEl.textContent = '已儲存（本機）…';
+try{
+const db = getDb();
+const uid = getLocalUID();
+await setDoc(doc(db, 'profiles', uid), data, { merge:true });
+statusEl.textContent = '已儲存到雲端 ✅';
+}catch(err){
+console.warn('firestore save skipped / failed', err);
+statusEl.textContent = '雲端未啟用或儲存失敗（僅本機）';
+}
+});
