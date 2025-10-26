@@ -30,6 +30,8 @@ const container = document.getElementById("exerciseContainer");
 
 // === 載入菜單按鈕事件 ===
 loadBtn.addEventListener("click", async () => {
+  const userName = localStorage.getItem("userName") || "訪客";
+console.log(`🔹 當前登入使用者：${userName}`);
   const goal = goalSelect.value;
   const part = partSelect.value;
   const docRef = doc(db, "menus", `${goal}_${part}`);
@@ -76,8 +78,9 @@ async function displayExercises(exercises) {
     let sourceLabel = "（系統推薦值）";
 
     // Firestore 紀錄讀取（個人化）
-    const userId = "defaultUser"; // 若未整合登入系統，可用固定名稱
-    const userRef = doc(db, "profiles", userId);
+// 取得目前登入使用者名稱
+const userId = localStorage.getItem("userName") || "guestUser";
+const userRef = doc(db, "profiles", userId);
     const userSnap = await getDoc(userRef);
 
     let history = {};
