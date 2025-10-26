@@ -3,13 +3,13 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/fireba
 import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBur0O0PTGxPotyDSOB9Yj1Gaqf3B0",
-  authDomain: "fitness-guide-9a83f.firebaseapp.com",
-  projectId: "fitness-guide-9a83f",
-  storageBucket: "fitness-guide-9a83f.appspot.com",
+  apiKey: "AIzaSyBur0DoRPT0csPqtyDSOQBYMjlGaqf3EB0",
+  authDomain: "fitness-guide-9a8f3.firebaseapp.com",
+  projectId: "fitness-guide-9a8f3",
+  storageBucket: "fitness-guide-9a8f3.firebasestorage.app",
   messagingSenderId: "969288112649",
-  appId: "1:969288112649:web:58b5b807c410388b138d8",
-  measurementId: "G-7XL13P4K0Q"
+  appId: "1:969288112649:web:58b5b807c410388b1836d8",
+  measurementId: "G-7X1L324K0Q"
 };
 
 const app = initializeApp(firebaseConfig);
