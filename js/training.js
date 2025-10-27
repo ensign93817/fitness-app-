@@ -21,6 +21,16 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+// === 顯示上次訓練目標與部位 ===
+const lastGoal = localStorage.getItem("lastGoal");
+const lastPart = localStorage.getItem("lastPart");
+
+if (lastGoal && lastPart) {
+  const infoDiv = document.createElement("div");
+  infoDiv.style.margin = "10px 0";
+  infoDiv.innerHTML = `📌 上次訓練：<b>${lastGoal}</b> - <b>${lastPart}</b>`;
+  document.querySelector("h2").insertAdjacentElement("beforebegin", infoDiv);
+}
 
 // === DOM 取得 ===
 const goalSelect = document.getElementById("goalSelect");
@@ -52,6 +62,8 @@ console.log(`🔹 當前登入使用者：${userName}`);
     container.innerHTML = `<p style="color:red;">❌ 無法載入菜單，請稍後再試。</p>`;
   }
 });
+localStorage.setItem("lastGoal", goal);
+localStorage.setItem("lastPart", part);
 
 // === 顯示訓練菜單 ===
 async function displayExercises(exercises) {
@@ -161,6 +173,39 @@ const userRef = doc(db, "profiles", userId);
         },
       });
     }
+// === 完成訓練按鈕 ===
+document.addEventListener("DOMContentLoaded", () => {
+  const btn = document.createElement("button");
+  btn.id = "completeTrainingBtn";
+  btn.textContent = "✅ 完成訓練";
+  btn.style = "display:block;margin:25px auto;padding:10px 20px;background-color:#28a745;color:white;border:none;border-radius:5px;cursor:pointer;";
+  document.querySelector("main")?.appendChild(btn);
+
+  btn.addEventListener("click", async () => {
+    const today = new Date().toISOString().split("T")[0];
+    const userName = localStorage.getItem("userName") || "guestUser";
+    const userRef = doc(db, "profiles", userName);
+
+    const cards = document.querySelectorAll(".card");
+    const updates = {};
+
+    cards.forEach(card => {
+      const name = card.querySelector("h4").textContent;
+      const safeName = name.replace(/[\/\[\]#$.()\s（）]/g, "_");
+      const weight = parseFloat(card.querySelector(".weight").textContent.replace(/[^\d.]/g, ""));
+      updates[`history.${safeName}.${today}`] = weight;
+    });
+
+    try {
+      await updateDoc(userRef, updates);
+      alert("✅ 今日訓練紀錄已完成！");
+      location.reload(); // 重新整理更新線圖
+    } catch (e) {
+      console.error(e);
+      alert("⚠️ 儲存失敗，請稍後再試。");
+    }
+  });
+});
 
 // === Firestore 紀錄每次訓練的重量 ===
 async function saveWeightChange(newWeight) {
