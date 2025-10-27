@@ -94,6 +94,7 @@ if (!window.hasBoundLoadMenu) {
 }
 // === 顯示訓練動作 ===
 async function displayExercises(exercises) {
+  const charts = [];
   container.innerHTML = "";
   const oldBtn = document.getElementById("completeTrainingBtn");
   if (oldBtn) oldBtn.remove();
@@ -164,7 +165,9 @@ const chart = new Chart(ctx, {
   },
   options: { scales: { y: { beginAtZero: true } } }
 });
-
+// ✅ 把 push 放在這裡（圖表建立好之後）
+charts.push({ name: safeName, chart });
+  
 // 把圖表暫存起來，以後更新用
 charts.push({ name: safeName, chart });
 
@@ -224,7 +227,7 @@ let totalToday = 0;
 
 for (const card of cards) {
   const name = card.querySelector("h4").textContent;
-  const safeName = name.replace(/[\/\[\]#$.()\s（）]/g, "_");
+ const safeName = name.replace(/[^\wㄱ-ㅎㅏ-ㅣ가-힣一-龥]/g, "_");
   const weight = parseFloat(card.querySelector(".weight").textContent.replace(/[^\d.]/g, "")) || 0;
   updates[`history.${safeName}.${today}`] = weight;
   totalToday += weight;
