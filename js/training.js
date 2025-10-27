@@ -135,44 +135,39 @@ const userRef = doc(db, "profiles", userId);
     `;
     container.appendChild(card);
 
-    // === 建立 Chart.js 折線圖 ===
-    const ctx = document.getElementById(`chart-${i}`);
-    const dates = Object.keys(history);
-    const weights = Object.values(history);
+// === 建立 Chart.js 折線圖 ===
+const ctx = document.getElementById(`chart-${i}`);
+const dates = Object.keys(history);
+const weights = Object.values(history);
 
-    if (dates.length > 0) {
-      new Chart(ctx, {
-        type: "line",
-        data: {
-          labels: dates,
-          datasets: [
-            {
-              label: "歷史重量 (kg)",
-              data: weights,
-              borderColor: "#007bff",
-              backgroundColor: "rgba(0,123,255,0.1)",
-              tension: 0.2,
-            },
-          ],
-        },
-        options: {
-          plugins: {
-            tooltip: {
-              enabled: true,
-              callbacks: {
-                label: (context) => ` ${context.parsed.y} kg`,
-              },
-            },
-          },
-          scales: {
-            y: {
-              beginAtZero: true,
-              title: { display: true, text: "重量 (kg)" },
-            },
+if (dates.length > 0) {
+  new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: dates,
+      datasets: [{
+        label: "歷史重量 (kg)",
+        data: weights,
+        borderColor: "#007bff",
+        backgroundColor: "rgba(0,123,255,0.1)",
+        tension: 0.2,
+      }],
+    },
+    options: {
+      plugins: {
+        tooltip: {
+          callbacks: {
+            label: context => `${context.parsed.y} kg`,
           },
         },
-      });
-    }
+      },
+      scales: {
+        y: { beginAtZero: true },
+      },
+    },
+  });
+}
+
 // === 完成訓練按鈕 ===
 document.addEventListener("DOMContentLoaded", () => {
   const btn = document.createElement("button");
