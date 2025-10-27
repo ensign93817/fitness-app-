@@ -81,7 +81,6 @@ if (!window.menuLoadBound) {
       const data = docSnap.data();
       if (!data.exercises || !Array.isArray(data.exercises)) {
         container.innerHTML = "<p>⚠️ 菜單資料格式錯誤。</p>";
-        return;
       }
 
       console.log("成功載入 Firestore 文件：", data);
