@@ -255,7 +255,7 @@ for (const { name, chart } of charts) {
 alert(`✅ 今日訓練總重量：${totalToday.toFixed(1)} kg 已儲存！`);
 // === 頁面載入後處理 ===
 window.addEventListener("DOMContentLoaded", () => {
-  // 1️⃣ 取得使用者名稱或建立新使用者
+  // 1️⃣ 檢查使用者是否存在
   let userName = localStorage.getItem("userName");
   if (!userName) {
     userName = prompt("請輸入您的使用者名稱：");
@@ -278,7 +278,7 @@ window.addEventListener("DOMContentLoaded", () => {
     );
   }
 
-  // 3️⃣ 綁定「切換使用者」按鈕
+  // 3️⃣ 綁定切換使用者按鈕
   const changeBtn = document.getElementById("changeUserBtn");
   if (changeBtn) {
     changeBtn.addEventListener("click", () => {
@@ -286,11 +286,10 @@ window.addEventListener("DOMContentLoaded", () => {
       if (newUser) {
         localStorage.setItem("userName", newUser);
         alert(`✅ 已切換為使用者：${newUser}`);
-        location.reload(); // 重新整理讓資料刷新
+        location.reload();
       }
     });
   } else {
-    console.error("❌ 找不到切換使用者按鈕 (changeUserBtn)");
+    console.error("❌ 找不到切換使用者按鈕");
   }
-});
-});
+}); // ✅ ← 千萬別忘記這兩個括號
