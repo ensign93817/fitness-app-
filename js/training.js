@@ -67,7 +67,6 @@ if (!window.menuLoadBound) {
       const docSnap = await getDoc(docRef);
       if (!docSnap.exists()) {
         container.innerHTML = "<p>⚠️ 查無此訓練菜單。</p>";
-        return;
       }
 
       const data = docSnap.data();
