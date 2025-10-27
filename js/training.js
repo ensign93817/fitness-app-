@@ -118,12 +118,10 @@ uniqueExercises.forEach((ex, i) => {
 
   const safeName = ex.name.replace(/[\/\[\]#$.()\s（）]/g, "_");
   const history = userData.history?.[safeName] || {};
-
-  const sets = ex.sets || ex.defaultSets || ex["組數"] || "未設定";
-  const reps = ex.reps || ex.defaultReps || ex["次數"] || "未設定";
-  const rest = ex.rest || ex.restSec || ex["休息"] || "未設定";
-  const baseWeight =
-    ex.weight || ex.defaultWeight || ex["重量"] || ex["weightKG"] || 0;
+  const sets = ex.sets || ex.defaultSets || "未設定";
+  const reps = ex.reps || ex.defaultReps || "未設定";
+  const rest = ex.rest || ex.restSec || "未設定";
+  const baseWeight = ex.weight || ex.defaultWeight || 0;
   const lastWeight = Object.values(history).pop() || baseWeight;
 
   const card = document.createElement("div");
@@ -135,7 +133,6 @@ uniqueExercises.forEach((ex, i) => {
     <p class="weight">推薦重量：${
       lastWeight > 0 ? lastWeight + " kg" : "尚未有紀錄"
     }（根據上次訓練）</p>
-
     <div class="btn-group mb-2">
       <button class="btn btn-success add-btn">加重</button>
       <button class="btn btn-primary keep-btn">維持</button>
@@ -145,11 +142,10 @@ uniqueExercises.forEach((ex, i) => {
   `;
   container.appendChild(card);
 
-  // === 折線圖 === （⚠️ 這段一定要放在 forEach 內）
+  // === 折線圖 ===
   const ctx = document.getElementById(`chart-${i}`);
   const dates = Object.keys(history);
   const weights = Object.values(history);
-
   new Chart(ctx, {
     type: "line",
     data: {
@@ -164,46 +160,47 @@ uniqueExercises.forEach((ex, i) => {
         },
       ],
     },
-    options: {
-      scales: { y: { beginAtZero: true } },
-    },
+    options: { scales: { y: { beginAtZero: true } } },
   });
-}); // ← 確保 forEach 在這裡才結束！
 
+  // === 加重 / 維持 / 減重 ===
+  const addBtn = card.querySelector(".add-btn");
+  const keepBtn = card.querySelector(".keep-btn");
+  const reduceBtn = card.querySelector(".reduce-btn");
+  const weightText = card.querySelector(".weight");
+  const delta = 2.5;
+  let currentWeight = lastWeight;
 
-    // === 加重 / 維持 / 減重 ===
-    const addBtn = card.querySelector(".add-btn");
-    const keepBtn = card.querySelector(".keep-btn");
-    const reduceBtn = card.querySelector(".reduce-btn");
-    const weightText = card.querySelector(".weight");
-    const delta = 2.5;
-    let currentWeight = lastWeight;
-
-    async function saveWeightChange(newWeight) {
-      const today = new Date().toISOString().split("T")[0];
-      try {
-        await updateDoc(userRef, { [`history.${safeName}.${today}`]: newWeight });
-      } catch {
-        await setDoc(userRef, { history: { [safeName]: { [today]: newWeight } } }, { merge: true });
-      }
+  async function saveWeightChange(newWeight) {
+    const today = new Date().toISOString().split("T")[0];
+    try {
+      await updateDoc(userRef, { [`history.${safeName}.${today}`]: newWeight });
+    } catch {
+      await setDoc(
+        userRef,
+        { history: { [safeName]: { [today]: newWeight } } },
+        { merge: true }
+      );
     }
+  }
 
-    addBtn.addEventListener("click", async () => {
-      currentWeight += delta;
-      weightText.textContent = `重量：${currentWeight.toFixed(1)} kg`;
-      await saveWeightChange(currentWeight);
-    });
+  addBtn.addEventListener("click", async () => {
+    currentWeight += delta;
+    weightText.textContent = `重量：${currentWeight.toFixed(1)} kg`;
+    await saveWeightChange(currentWeight);
+  });
 
-    keepBtn.addEventListener("click", async () => {
-      alert(`💪 維持重量 ${currentWeight.toFixed(1)} kg`);
-      await saveWeightChange(currentWeight);
-    });
+  keepBtn.addEventListener("click", async () => {
+    alert(`💪 維持重量 ${currentWeight.toFixed(1)} kg`);
+    await saveWeightChange(currentWeight);
+  });
 
-    reduceBtn.addEventListener("click", async () => {
-      currentWeight = Math.max(0, currentWeight - delta);
-      weightText.textContent = `重量：${currentWeight.toFixed(1)} kg`;
-      await saveWeightChange(currentWeight);
-    });
+  reduceBtn.addEventListener("click", async () => {
+    currentWeight = Math.max(0, currentWeight - delta);
+    weightText.textContent = `重量：${currentWeight.toFixed(1)} kg`;
+    await saveWeightChange(currentWeight);
+  });
+}); // ← forEach 結束
 
   // === ✅ 完成訓練按鈕 ===
   const completeBtn = document.createElement("button");
