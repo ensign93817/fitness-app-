@@ -143,25 +143,27 @@ uniqueExercises.forEach((ex, i) => {
   container.appendChild(card);
 
   // === 折線圖 ===
-  const ctx = document.getElementById(`chart-${i}`);
-  const dates = Object.keys(history);
-  const weights = Object.values(history);
-  new Chart(ctx, {
-    type: "line",
-    data: {
-      labels: dates.length ? dates : [new Date().toISOString().split("T")[0]],
-      datasets: [
-        {
-          label: "重量變化 (kg)",
-          data: weights.length ? weights : [lastWeight],
-          borderColor: "#007bff",
-          backgroundColor: "rgba(0,123,255,0.1)",
-          tension: 0.2,
-        },
-      ],
-    },
-    options: { scales: { y: { beginAtZero: true } } },
-  });
+  // === 全域變數：用來存放所有動作對應的圖表 ===
+const charts = [];
+ const ctx = document.getElementById(`chart-${i}`);
+const chart = new Chart(ctx, {
+  type: "line",
+  data: {
+    labels: dates.length ? dates : [new Date().toISOString().split("T")[0]],
+    datasets: [{
+      label: "重量變化 (kg)",
+      data: weights.length ? weights : [lastWeight],
+      borderColor: "#007bff",
+      backgroundColor: "rgba(0,123,255,0.1)",
+      tension: 0.2
+    }]
+  },
+  options: { scales: { y: { beginAtZero: true } } }
+});
+
+// 把圖表暫存起來，以後更新用
+charts.push({ name: safeName, chart });
+
 
   // === 加重 / 維持 / 減重 ===
   const addBtn = card.querySelector(".add-btn");
@@ -211,23 +213,40 @@ uniqueExercises.forEach((ex, i) => {
   container.insertAdjacentElement("afterend", completeBtn);
 
   completeBtn.addEventListener("click", async () => {
-    const today = new Date().toISOString().split("T")[0];
-    const cards = document.querySelectorAll(".card");
-    const updates = {};
-    let todayTotal = 0;
+  const today = new Date().toISOString().split("T")[0];
+const cards = document.querySelectorAll(".card");
+const updates = {};
+let totalToday = 0;
 
-    cards.forEach(card => {
-      const name = card.querySelector("h4").textContent;
-      const safeName = name.replace(/[\/\[\]#$.()\s（）]/g, "_");
-      const weight = parseFloat(card.querySelector(".weight").textContent.replace(/[^\d.]/g, ""));
-      updates[`history.${safeName}.${today}`] = weight;
-      todayTotal += weight;
-    });
-
-    await updateDoc(userRef, updates);
-    alert(`✅ 今日總訓練重量：${todayTotal.toFixed(1)} kg 已儲存！`);
-  });
+for (const card of cards) {
+  const name = card.querySelector("h4").textContent;
+  const safeName = name.replace(/[\/\[\]#$.()\s（）]/g, "_");
+  const weight = parseFloat(card.querySelector(".weight").textContent.replace(/[^\d.]/g, "")) || 0;
+  updates[`history.${safeName}.${today}`] = weight;
+  totalToday += weight;
 }
+
+try {
+  await updateDoc(userRef, updates);
+} catch (e) {
+  if (e.code === "not-found") {
+    await setDoc(userRef, updates, { merge: true });
+  } else {
+    console.error("寫入錯誤：", e);
+  }
+}
+    // === 即時更新折線圖 ===
+const todayStr = new Date().toISOString().split("T")[0];
+for (const { name, chart } of charts) {
+  const weight = updates[`history.${name}.${todayStr}`];
+  if (weight !== undefined) {
+    chart.data.labels.push(todayStr);
+    chart.data.datasets[0].data.push(weight);
+    chart.update(); // 立即刷新畫面
+  }
+}
+alert(`✅ 今日訓練總重量：${totalToday.toFixed(1)} kg 已儲存！`);
+
 // === 登入與切換使用者 ===
 window.addEventListener("DOMContentLoaded", () => {
   let userName = localStorage.getItem("userName");
