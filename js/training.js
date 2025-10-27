@@ -145,10 +145,8 @@ uniqueExercises.forEach((ex, i) => {
   // === 折線圖 ===
   // === 全域變數：用來存放所有動作對應的圖表 ===
 const charts = [];
- const ctx = document.getElementById(`chart-${i}`);
-  const dates = [];
-const weights = [];
-  const historyData = userData.history?.[safeName] || {};
+const ctx = document.getElementById(`chart-${i}`);
+const historyData = userData.history?.[safeName] || {};
 const dates = Object.keys(historyData);
 const weights = Object.values(historyData);
 
