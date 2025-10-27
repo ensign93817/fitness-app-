@@ -264,7 +264,7 @@ window.addEventListener("DOMContentLoaded", () => {
     `<div style="margin:10px 0;">👤 當前使用者：<b>${currentUser}</b></div>`
   );
 
-  // === 切換使用者按鈕事件 ===
+   // 切換使用者按鈕
   const changeBtn = document.getElementById("changeUserBtn");
   if (changeBtn) {
     changeBtn.addEventListener("click", () => {
@@ -272,8 +272,8 @@ window.addEventListener("DOMContentLoaded", () => {
       if (newUser) {
         localStorage.setItem("userName", newUser);
         alert(`✅ 已切換使用者：${newUser}`);
-        location.reload(); // 重新載入以套用新帳號
+        location.reload(); // 重新載入頁面
       }
     });
   }
-});
+}); // ← 關閉 DOMContentLoaded 監聽器
