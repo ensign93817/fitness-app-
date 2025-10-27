@@ -202,7 +202,6 @@ async function displayExercises(exercises) {
       weightText.textContent = `重量：${currentWeight.toFixed(1)} kg`;
       await saveWeightChange(currentWeight);
     });
-  });
 
   // === ✅ 完成訓練按鈕 ===
   const completeBtn = document.createElement("button");
