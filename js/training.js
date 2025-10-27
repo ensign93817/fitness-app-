@@ -21,6 +21,7 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+
 // === 顯示上次訓練目標與部位 ===
 const lastGoal = localStorage.getItem("lastGoal");
 const lastPart = localStorage.getItem("lastPart");
@@ -38,12 +39,16 @@ const partSelect = document.getElementById("partSelect");
 const loadBtn = document.getElementById("loadBtn");
 const container = document.getElementById("exerciseContainer");
 
-// === 載入菜單按鈕事件 ===
+// === 載入訓練菜單 ===
 loadBtn.addEventListener("click", async () => {
   const userName = localStorage.getItem("userName") || "訪客";
-console.log(`🔹 當前登入使用者：${userName}`);
+  console.log(`當前登入使用者：${userName}`);
+
   const goal = goalSelect.value;
   const part = partSelect.value;
+  localStorage.setItem("lastGoal", goal);
+  localStorage.setItem("lastPart", part);
+
   const docRef = doc(db, "menus", `${goal}_${part}`);
   container.innerHTML = "<p>⏳ 正在載入中...</p>";
 
@@ -51,43 +56,88 @@ console.log(`🔹 當前登入使用者：${userName}`);
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
       const data = docSnap.data();
-      console.log("✅ 成功載入 Firestore 文件：", data);
-      displayExercises(data.exercises || []);
+      console.log("成功載入 Firestore 文件：", data);
+      displayExercises(data.exercises);
     } else {
-      console.warn("⚠️ 找不到文件：", `${goal}_${part}`);
-      container.innerHTML = `<p style="color:red;">❌ 找不到此目標與部位的訓練菜單。</p>`;
+      container.innerHTML = "<p>⚠️ 查無此訓練菜單。</p>";
     }
-  } catch (err) {
-    console.error("🔥 Firestore 讀取錯誤：", err);
-    container.innerHTML = `<p style="color:red;">❌ 無法載入菜單，請稍後再試。</p>`;
+  } catch (error) {
+    console.error("載入菜單錯誤：", error);
+    container.innerHTML = "<p>❌ 無法讀取資料，請稍後再試。</p>";
   }
 });
-localStorage.setItem("lastGoal", goal);
-localStorage.setItem("lastPart", part);
 
-// === 顯示訓練菜單 ===
+// === 顯示訓練動作 ===
 async function displayExercises(exercises) {
   container.innerHTML = "";
+  const userName = localStorage.getItem("userName") || "guestUser";
+  const userRef = doc(db, "profiles", userName);
+  const userSnap = await getDoc(userRef);
+  const userData = userSnap.exists() ? userSnap.data() : {};
 
-  // 去重複處理（防止同名動作重複顯示）
-  const uniqueMap = new Map();
-  exercises.forEach((ex) => {
-    const name = ex.name || "未命名動作";
-    if (!uniqueMap.has(name)) uniqueMap.set(name, ex);
+  exercises.forEach((ex, i) => {
+    const safeName = ex.name.replace(/[\/\[\]#$.()\s（）]/g, "_");
+    const history = userData.history?.[safeName] || {};
+    const lastWeight = Object.values(history).pop() || ex.weight;
+
+    // === 建立動作卡片 ===
+    const card = document.createElement("div");
+    card.className = "card p-3 mb-3 shadow-sm";
+    card.innerHTML = `
+      <h4>${i + 1}. ${ex.name}</h4>
+      <p>組數：${ex.sets}　次數：${ex.reps}</p>
+      <p>休息：${ex.rest} 秒</p>
+      <p class="weight">重量：${lastWeight} kg（系統推薦值）</p>
+      <div class="btn-group mb-2">
+        <button class="btn btn-success add-btn">加重</button>
+        <button class="btn btn-primary keep-btn">維持</button>
+        <button class="btn btn-danger reduce-btn">減重</button>
+      </div>
+      <canvas id="chart-${i}" height="120"></canvas>
+    `;
+    container.appendChild(card);
+    
+      // === 重量調整功能 ===
+    const addBtn = card.querySelector(".add-btn");
+    const keepBtn = card.querySelector(".keep-btn");
+    const reduceBtn = card.querySelector(".reduce-btn");
+    const weightText = card.querySelector(".weight");
+
+    const delta = 2.5;
+    let currentWeight = lastWeight;
+
+    async function saveWeightChange(newWeight) {
+      const today = new Date().toISOString().split("T")[0];
+      const safeName = ex.name.replace(/[\/\[\]#$.()\s（）]/g, "_");
+      try {
+        await updateDoc(userRef, {
+          [`history.${safeName}.${today}`]: newWeight,
+        });
+      } catch {
+        await setDoc(userRef, {
+          history: { [safeName]: { [today]: newWeight } },
+        }, { merge: true });
+      }
+    }
+
+    addBtn.addEventListener("click", async () => {
+      currentWeight += delta;
+      weightText.textContent = `重量：${currentWeight.toFixed(1)} kg`;
+      await saveWeightChange(currentWeight);
+    });
+
+    keepBtn.addEventListener("click", async () => {
+      alert(`💪 維持重量：${currentWeight.toFixed(1)} kg`);
+      await saveWeightChange(currentWeight);
+    });
+
+    reduceBtn.addEventListener("click", async () => {
+      currentWeight = Math.max(0, currentWeight - delta);
+      weightText.textContent = `重量：${currentWeight.toFixed(1)} kg`;
+      await saveWeightChange(currentWeight);
+    });
   });
-  const uniqueExercises = Array.from(uniqueMap.values());
 
-  // === 逐一建立動作卡片 ===
-  uniqueExercises.forEach(async (ex, i) => {
-    const name = ex.name || "未命名動作";
-    const reps = ex.defaultReps || "8–12";
-    const sets = ex.defaultSets || "3–4";
-    const rest = ex.restSec || 75;
-    const delta = Number(ex.deltaWeight || 2.5);
-
-    // === 推薦重量邏輯 ===
-    let baseWeight = Number(ex.defaultWeight || 0);
-    let sourceLabel = "（系統推薦值）";
 
     // Firestore 紀錄讀取（個人化）
 // 取得目前登入使用者名稱
@@ -168,19 +218,25 @@ if (dates.length > 0) {
   });
 }
 
-// === 完成訓練按鈕 ===
-document.addEventListener("DOMContentLoaded", () => {
+ // === 完成訓練按鈕 ===
   const btn = document.createElement("button");
   btn.id = "completeTrainingBtn";
   btn.textContent = "✅ 完成訓練";
-  btn.style = "display:block;margin:25px auto;padding:10px 20px;background-color:#28a745;color:white;border:none;border-radius:5px;cursor:pointer;";
-  document.querySelector("main")?.appendChild(btn);
+  btn.style = `
+    display:block;
+    margin:25px auto;
+    padding:10px 20px;
+    background-color:#28a745;
+    color:white;
+    border:none;
+    border-radius:5px;
+    font-size:16px;
+    cursor:pointer;
+  `;
+  container.insertAdjacentElement("afterend", btn);
 
   btn.addEventListener("click", async () => {
     const today = new Date().toISOString().split("T")[0];
-    const userName = localStorage.getItem("userName") || "guestUser";
-    const userRef = doc(db, "profiles", userName);
-
     const cards = document.querySelectorAll(".card");
     const updates = {};
 
@@ -194,14 +250,13 @@ document.addEventListener("DOMContentLoaded", () => {
     try {
       await updateDoc(userRef, updates);
       alert("✅ 今日訓練紀錄已完成！");
-      location.reload(); // 重新整理更新線圖
+      location.reload();
     } catch (e) {
       console.error(e);
       alert("⚠️ 儲存失敗，請稍後再試。");
     }
   });
-});
-
+}
 // === Firestore 紀錄每次訓練的重量 ===
 async function saveWeightChange(newWeight) {
   const today = new Date().toISOString().split("T")[0];
