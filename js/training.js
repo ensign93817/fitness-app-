@@ -48,10 +48,7 @@ const loadBtn = document.getElementById("loadBtn");
 const container = document.getElementById("exerciseContainer");
 
 // === 防止重複綁定 ===
-if (!window.menuLoadBound) {
-  window.menuLoadBound = true;
-
- if (!window.hasBoundLoadMenu) {
+if (!window.hasBoundLoadMenu) {
   window.hasBoundLoadMenu = true;
 
   loadBtn.addEventListener("click", async () => {
@@ -60,34 +57,42 @@ if (!window.menuLoadBound) {
 
     const goal = goalSelect.value;
     const part = partSelect.value;
+
+    if (!goal || !part) {
+      alert("⚠️ 請先選擇訓練目標與部位！");
+      return;
+    }
+
     localStorage.setItem("lastGoal", goal);
     localStorage.setItem("lastPart", part);
 
     const docRef = doc(db, "menus", `${goal}_${part}`);
-    container.innerHTML = "<p>⏳ 正在載入中...</p>";
+    container.innerHTML = "<p>⏳ 正在載入菜單中...</p>";
+
+    try {
+      const docSnap = await getDoc(docRef);
+
+      if (!docSnap.exists()) {
+        container.innerHTML = "<p>⚠️ 查無此訓練菜單。</p>";
+        return; // ✅ 這裡現在合法，因為在 async function 裡
+      }
+
+      const data = docSnap.data();
+
+      if (!data.exercises || !Array.isArray(data.exercises)) {
+        container.innerHTML = "<p>⚠️ 菜單資料格式錯誤。</p>";
+        return;
+      }
+
+      console.log("✅ 成功載入 Firestore 文件：", data);
+      await displayExercises(data.exercises);
+    } catch (error) {
+      console.error("❌ 載入過程錯誤：", error);
+      container.innerHTML = "<p>❌ 無法讀取資料，請稍後再試。</p>";
+    }
   });
-} // <== 新增的關閉括號
-
-    // 移除舊的完成訓練按鈕
-try {
-  const docSnap = await getDoc(docRef);
-  if (!docSnap.exists()) {
-    container.innerHTML = "<p>⚠️ 查無此訓練菜單。</p>";
-    return; // ⚠️ 沒資料直接結束
-  }
-
-  const data = docSnap.data();
-  if (!data.exercises || !Array.isArray(data.exercises)) {
-    container.innerHTML = "<p>⚠️ 菜單資料格式錯誤。</p>";
-    return; // ⚠️ 資料格式錯誤直接結束
-  }
-
-  console.log("✅ 成功載入 Firestore 文件：", data);
-  await displayExercises(data.exercises);
-} catch (error) {
-  console.error("❌ 載入過程錯誤：", error);
-  container.innerHTML = "<p>❌ 無法讀取資料，請稍後再試。</p>";
 }
+
 
 // === 顯示訓練動作 ===
 async function displayExercises(exercises) {
