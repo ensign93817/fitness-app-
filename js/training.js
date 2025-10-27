@@ -231,7 +231,6 @@ uniqueExercises.forEach((ex, i) => {
 // === 登入與切換使用者 ===
 window.addEventListener("DOMContentLoaded", () => {
   let userName = localStorage.getItem("userName");
-
   if (!userName) {
     userName = prompt("請輸入您的使用者名稱：");
     localStorage.setItem("userName", userName);
@@ -239,13 +238,14 @@ window.addEventListener("DOMContentLoaded", () => {
 
   console.log("登入使用者：", userName);
 
-  // 顯示登入中使用者
-  const info = document.createElement("p");
-  info.innerHTML = `👤 登入中：<b>${userName}</b>`;
-  info.style.margin = "10px 0";
-  document.querySelector("h2").insertAdjacentElement("beforebegin", info);
+  // === 顯示當前使用者 ===
+  const currentUser = localStorage.getItem("userName") || "guestUser";
+  document.querySelector("h2").insertAdjacentHTML(
+    "beforebegin",
+    `<div style="margin:10px 0;">👤 當前使用者：<b>${currentUser}</b></div>`
+  );
 
-  // 切換使用者按鈕事件
+  // === 切換使用者按鈕事件 ===
   const changeBtn = document.getElementById("changeUserBtn");
   if (changeBtn) {
     changeBtn.addEventListener("click", () => {
@@ -253,7 +253,7 @@ window.addEventListener("DOMContentLoaded", () => {
       if (newUser) {
         localStorage.setItem("userName", newUser);
         alert(`✅ 已切換使用者：${newUser}`);
-        location.reload(); // 重新載入頁面以應用新帳號
+        location.reload(); // 重新載入以套用新帳號
       }
     });
   }
