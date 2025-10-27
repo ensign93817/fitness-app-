@@ -162,25 +162,24 @@ const userRef = doc(db, "profiles", userId);
       });
     }
 
-    // === 取得按鈕與動作 ===
-    const weightText = card.querySelector(".weight");
-    const addBtn = card.querySelector(".add-btn");
-    const keepBtn = card.querySelector(".keep-btn");
-    const reduceBtn = card.querySelector(".reduce-btn");
-
-    // Firestore 紀錄函式
-   async function saveWeightChange(newWeight) {
+// === Firestore 紀錄每次訓練的重量 ===
+async function saveWeightChange(newWeight) {
   const today = new Date().toISOString().split("T")[0];
-  const safeName = name.replace(/[\/\[\]#$.]/g, "_"); // 🔧 移除非法字元
-  await updateDoc(userRef, {
-    [`history.${safeName}.${today}`]: newWeight,
-  }).catch(async () => {
+
+  // 🔒 避免 Firestore 禁用字元錯誤 (包含全形符號)
+  const safeName = name.replace(/[\/\[\]#$.()\s（）]/g, "_");
+
+  try {
+    await updateDoc(userRef, {
+      [`history.${safeName}.${today}`]: newWeight,
+    });
+  } catch (error) {
     await setDoc(
       userRef,
       { history: { [safeName]: { [today]: newWeight } } },
       { merge: true }
     );
-  });
+  }
 }
 
     // === 三個控制按鈕 ===
@@ -201,21 +200,4 @@ const userRef = doc(db, "profiles", userId);
       await saveWeightChange(currentWeight);
     });
   });
-}
-// === Firestore 紀錄每次訓練的重量 ===
-async function saveWeightChange(newWeight) {
-  const today = new Date().toISOString().split("T")[0];
-  const safeName = name.replace(/[\/\[\]#$.]/g, "_"); // 避免 Firestore 字元錯誤
-
-  try {
-    await updateDoc(userRef, {
-      [`history.${safeName}.${today}`]: newWeight,
-    });
-  } catch (error) {
-    await setDoc(
-      userRef,
-      { history: { [safeName]: { [today]: newWeight } } },
-      { merge: true }
-    );
-  }
 }
