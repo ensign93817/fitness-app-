@@ -253,9 +253,9 @@ for (const { name, chart } of charts) {
   }
 }
 alert(`✅ 今日訓練總重量：${totalToday.toFixed(1)} kg 已儲存！`);
-// === 頁面載入後處理 ===
+// === 頁面載入後執行 ===
 window.addEventListener("DOMContentLoaded", () => {
-  // 1️⃣ 檢查使用者是否存在
+  // 1️⃣ 檢查使用者名稱是否存在
   let userName = localStorage.getItem("userName");
   if (!userName) {
     userName = prompt("請輸入您的使用者名稱：");
@@ -278,7 +278,7 @@ window.addEventListener("DOMContentLoaded", () => {
     );
   }
 
-  // 3️⃣ 綁定切換使用者按鈕
+  // 3️⃣ 綁定「切換使用者」按鈕
   const changeBtn = document.getElementById("changeUserBtn");
   if (changeBtn) {
     changeBtn.addEventListener("click", () => {
@@ -292,4 +292,4 @@ window.addEventListener("DOMContentLoaded", () => {
   } else {
     console.error("❌ 找不到切換使用者按鈕");
   }
-}); // ✅ 一定要有這行
+}); // ✅ 這裡是成對結尾
