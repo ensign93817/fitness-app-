@@ -113,30 +113,41 @@ async function displayExercises(exercises) {
   const userSnap = await getDoc(userRef);
   const userData = userSnap.exists() ? userSnap.data() : {};
 
-  uniqueExercises.forEach((ex, i) => {
-    if (!ex.name) return;
+ uniqueExercises.forEach((ex, i) => {
+  if (!ex.name) return;
 
-    const safeName = ex.name.replace(/[\/\[\]#$.()\s（）]/g, "_");
-    const history = userData.history?.[safeName] || {};
-    const lastWeight = Object.values(history).pop() || ex.weight || 0;
+  const safeName = ex.name.replace(/[\/\[\]#$.()\s（）]/g, "_");
+  const history = userData.history?.[safeName] || {};
 
-    const card = document.createElement("div");
-    card.className = "card p-3 mb-3 shadow-sm";
-    card.innerHTML = `
-      <h4>${i + 1}. ${ex.name}</h4>
-      <p>組數：${ex.sets || ex.set || "未設定"}　
-         次數：${ex.reps || ex.rep || "未設定"}</p>
-      <p>休息：${ex.rest || ex.restTime || "未設定"} 秒</p>
-      <p class="weight">推薦重量：${lastWeight > 0 ? lastWeight + " kg" : "尚未有紀錄"}（根據上次訓練）</p>
+  // ✅ 兼容不同命名方式（defaultXXX、中文、英文）
+  const sets = ex.sets || ex.defaultSets || ex["組數"] || "未設定";
+  const reps = ex.reps || ex.defaultReps || ex["次數"] || "未設定";
+  const rest = ex.rest || ex.restSec || ex["休息"] || "未設定";
+  const baseWeight =
+    ex.weight || ex.defaultWeight || ex["重量"] || ex["weightKG"] || 0;
 
-      <div class="btn-group mb-2">
-        <button class="btn btn-success add-btn">加重</button>
-        <button class="btn btn-primary keep-btn">維持</button>
-        <button class="btn btn-danger reduce-btn">減重</button>
-      </div>
-      <canvas id="chart-${i}" height="120"></canvas>
-    `;
-    container.appendChild(card);
+  // ✅ 若使用者有歷史紀錄，用最後一次紀錄；否則用菜單預設
+  const lastWeight = Object.values(history).pop() || baseWeight;
+
+  const card = document.createElement("div");
+  card.className = "card p-3 mb-3 shadow-sm";
+  card.innerHTML = `
+    <h4>${i + 1}. ${ex.name}</h4>
+    <p>組數：${sets}　次數：${reps}</p>
+    <p>休息：${rest} 秒</p>
+    <p class="weight">推薦重量：${
+      lastWeight > 0 ? lastWeight + " kg" : "尚未有紀錄"
+    }（根據上次訓練）</p>
+
+    <div class="btn-group mb-2">
+      <button class="btn btn-success add-btn">加重</button>
+      <button class="btn btn-primary keep-btn">維持</button>
+      <button class="btn btn-danger reduce-btn">減重</button>
+    </div>
+    <canvas id="chart-${i}" height="120"></canvas>
+  `;
+  container.appendChild(card);
+});
 
     // === 折線圖 ===
     const ctx = document.getElementById(`chart-${i}`);
