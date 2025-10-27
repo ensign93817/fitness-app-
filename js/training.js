@@ -16,7 +16,7 @@ const firebaseConfig = {
   storageBucket: "fitness-guide-9a8f3.firebasestorage.app",
   messagingSenderId: "969288112649",
   appId: "1:969288112649:web:58b5b807c410388b1836d8",
-  measurementId: "G-7X1L324K0Q",
+  measurementId: "G-7X1L324K0Q"
 };
 
 const app = initializeApp(firebaseConfig);
