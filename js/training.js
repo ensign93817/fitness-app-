@@ -93,6 +93,32 @@ if (!window.hasBoundLoadMenu) {
   });
 }
 
+async function displayExercises(exercises) {
+  container.innerHTML = "";
+  const oldBtn = document.getElementById("completeTrainingBtn");
+  if (oldBtn) oldBtn.remove();
+
+  // 🔹 去除重複動作（根據 name）
+  const uniqueExercises = [];
+  const names = new Set();
+  for (const ex of exercises) {
+    if (ex.name && !names.has(ex.name)) {
+      names.add(ex.name);
+      uniqueExercises.push(ex);
+    }
+  }
+
+  // 後續使用 uniqueExercises 而非原本的 exercises
+  const userName = localStorage.getItem("userName") || "guestUser";
+  const userRef = doc(db, "profiles", userName);
+  const userSnap = await getDoc(userRef);
+  const userData = userSnap.exists() ? userSnap.data() : {};
+
+  uniqueExercises.forEach((ex, i) => {
+    if (!ex.name) return;
+    ...
+  });
+}
 
 // === 顯示訓練動作 ===
 async function displayExercises(exercises) {
