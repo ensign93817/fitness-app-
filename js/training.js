@@ -167,6 +167,8 @@ async function displayExercises(exercises) {
         }],
       },
       options: { scales: { y: { beginAtZero: true } } },
+        },
+      });
     });
 
     // === 加重 / 維持 / 減重 ===
