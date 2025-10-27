@@ -25,7 +25,6 @@ const db = getFirestore(app);
 // === 顯示上次訓練目標與部位 ===
 const lastGoal = localStorage.getItem("lastGoal");
 const lastPart = localStorage.getItem("lastPart");
-
 if (lastGoal && lastPart) {
   const infoDiv = document.createElement("div");
   infoDiv.style.margin = "10px 0";
@@ -39,9 +38,9 @@ const partSelect = document.getElementById("partSelect");
 const loadBtn = document.getElementById("loadBtn");
 const container = document.getElementById("exerciseContainer");
 
-// === 載入訓練菜單 ===
+// === 載入菜單 ===
 loadBtn.addEventListener("click", async () => {
-  const userName = localStorage.getItem("userName") || "訪客";
+  const userName = localStorage.getItem("userName") || "guestUser";
   console.log(`當前登入使用者：${userName}`);
 
   const goal = goalSelect.value;
@@ -61,9 +60,9 @@ loadBtn.addEventListener("click", async () => {
     } else {
       container.innerHTML = "<p>⚠️ 查無此訓練菜單。</p>";
     }
-  } catch (error) {
-    console.error("載入菜單錯誤：", error);
-    container.innerHTML = "<p>❌ 無法讀取資料，請稍後再試。</p>";
+  } catch (e) {
+    console.error(e);
+    container.innerHTML = "<p>❌ 無法讀取資料。</p>";
   }
 });
 
@@ -107,7 +106,7 @@ async function displayExercises(exercises) {
         labels: dates.length ? dates : [new Date().toISOString().split("T")[0]],
         datasets: [{
           label: "歷史重量 (kg)",
-          data: weights.length ? weights : [0],
+          data: weights.length ? weights : [lastWeight],
           borderColor: "#007bff",
           backgroundColor: "rgba(0,123,255,0.1)",
           tension: 0.2,
@@ -120,7 +119,7 @@ async function displayExercises(exercises) {
       },
     });
 
-    // === 重量調整功能 ===
+    // === 三個控制按鈕 ===
     const addBtn = card.querySelector(".add-btn");
     const keepBtn = card.querySelector(".keep-btn");
     const reduceBtn = card.querySelector(".reduce-btn");
@@ -157,7 +156,7 @@ async function displayExercises(exercises) {
     });
   });
 
-  // === 完成訓練按鈕 ===
+  // === ✅ 完成訓練按鈕 ===
   const completeBtn = document.createElement("button");
   completeBtn.textContent = "✅ 完成訓練";
   completeBtn.style = `
@@ -187,47 +186,57 @@ async function displayExercises(exercises) {
       todayTotal += weight;
     });
 
-    try {
-      await updateDoc(userRef, updates);
+    await updateDoc(userRef, updates);
 
-      // 取得上次總量
-      const userSnap = await getDoc(userRef);
-      const historyData = userSnap.data().history || {};
-      const allDates = [];
-
-      for (const ex of Object.values(historyData)) {
-        for (const date of Object.keys(ex)) {
-          if (!allDates.includes(date)) allDates.push(date);
-        }
-      }
-      allDates.sort();
-      const lastDate = allDates[allDates.length - 2];
-      let lastTotal = 0;
-
-      if (lastDate) {
-        for (const ex of Object.values(historyData)) {
-          if (ex[lastDate]) lastTotal += ex[lastDate];
-        }
-      }
-
-      const growth = lastTotal ? (((todayTotal - lastTotal) / lastTotal) * 100).toFixed(1) : 0;
-
-      const resultDiv = document.createElement("div");
-      resultDiv.style =
-        "margin:20px auto; text-align:center; font-size:18px; color:#333;";
-      resultDiv.innerHTML = `
-        <hr>
-        🏋️‍♂️ <b>本次總訓練重量：</b>${todayTotal.toFixed(1)} kg<br>
-        ${lastDate
-          ? `📈 與上次 (${lastDate}) 相比：<b>${growth}%</b> ${
-              growth >= 0 ? "成長" : "下降"
-            }`
-          : "📊 這是你的第一次訓練紀錄！"}
-      `;
-      completeBtn.insertAdjacentElement("afterend", resultDiv);
-    } catch (error) {
-      console.error(error);
-      alert("⚠️ 儲存失敗，請稍後再試。");
+    // === 計算成長 ===
+    const userSnap = await getDoc(userRef);
+    const historyData = userSnap.data().history || {};
+    const allDates = [];
+    for (const ex of Object.values(historyData)) {
+      for (const d of Object.keys(ex)) if (!allDates.includes(d)) allDates.push(d);
     }
+    allDates.sort();
+    const lastDate = allDates[allDates.length - 2];
+    let lastTotal = 0;
+    if (lastDate) {
+      for (const ex of Object.values(historyData)) if (ex[lastDate]) lastTotal += ex[lastDate];
+    }
+    const growth = lastTotal ? (((todayTotal - lastTotal) / lastTotal) * 100).toFixed(1) : 0;
+
+    const resultDiv = document.createElement("div");
+    resultDiv.style = "margin:20px auto; text-align:center; font-size:18px;";
+    resultDiv.innerHTML = `
+      <hr>
+      🏋️‍♂️ 本次總訓練重量：${todayTotal.toFixed(1)} kg<br>
+      ${lastDate
+        ? `📈 與上次 (${lastDate}) 相比：<b>${growth}%</b> ${growth >= 0 ? "成長" : "下降"}`
+        : "📊 這是你的第一次訓練紀錄！"}
+      <canvas id="summaryChart" height="150"></canvas>
+    `;
+    completeBtn.insertAdjacentElement("afterend", resultDiv);
+
+    // === 繪製總量折線圖 ===
+    const dateTotals = {};
+    allDates.forEach(date => {
+      let total = 0;
+      for (const ex of Object.values(historyData)) if (ex[date]) total += ex[date];
+      dateTotals[date] = total;
+    });
+
+    new Chart(document.getElementById("summaryChart"), {
+      type: "line",
+      data: {
+        labels: Object.keys(dateTotals),
+        datasets: [{
+          label: "總訓練重量 (kg)",
+          data: Object.values(dateTotals),
+          borderColor: "#28a745",
+          backgroundColor: "rgba(40,167,69,0.1)",
+          tension: 0.2,
+        }],
+      },
+      options: { scales: { y: { beginAtZero: true } } },
+    });
   });
 }
+
