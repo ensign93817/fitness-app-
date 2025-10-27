@@ -218,3 +218,4 @@ async function displayExercises(exercises) {
     await updateDoc(userRef, updates);
     alert(`✅ 今日總訓練重量：${todayTotal.toFixed(1)} kg 已儲存！`);
   });
+}
