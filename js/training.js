@@ -16,7 +16,7 @@ const firebaseConfig = {
   storageBucket: "fitness-guide-9a8f3.firebasestorage.app",
   messagingSenderId: "969288112649",
   appId: "1:969288112649:web:58b5b807c410388b1836d8",
-  measurementId: "G-7X1L324K0Q"
+  measurementId: "G-7X1L324K0Q",
 };
 
 const app = initializeApp(firebaseConfig);
@@ -25,6 +25,7 @@ const db = getFirestore(app);
 // === 顯示上次訓練目標與部位 ===
 const lastGoal = localStorage.getItem("lastGoal");
 const lastPart = localStorage.getItem("lastPart");
+
 if (lastGoal && lastPart) {
   const infoDiv = document.createElement("div");
   infoDiv.style.margin = "10px 0";
@@ -53,16 +54,22 @@ loadBtn.addEventListener("click", async () => {
 
   try {
     const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-      const data = docSnap.data();
-      console.log("成功載入 Firestore 文件：", data);
-      displayExercises(data.exercises);
-    } else {
+    if (!docSnap.exists()) {
       container.innerHTML = "<p>⚠️ 查無此訓練菜單。</p>";
+      return;
     }
-  } catch (e) {
-    console.error(e);
-    container.innerHTML = "<p>❌ 無法讀取資料。</p>";
+
+    const data = docSnap.data();
+    if (!data.exercises || !Array.isArray(data.exercises)) {
+      container.innerHTML = "<p>⚠️ 菜單格式錯誤。</p>";
+      return;
+    }
+
+    console.log("成功載入 Firestore 文件：", data);
+    await displayExercises(data.exercises);
+  } catch (error) {
+    console.error("載入菜單錯誤：", error);
+    container.innerHTML = "<p>❌ 無法讀取資料，請稍後再試。</p>";
   }
 });
 
@@ -74,17 +81,21 @@ async function displayExercises(exercises) {
   const userSnap = await getDoc(userRef);
   const userData = userSnap.exists() ? userSnap.data() : {};
 
-  exercises.forEach((ex, i) => {
+  // === 建立所有動作卡片 ===
+  for (let i = 0; i < exercises.length; i++) {
+    const ex = exercises[i];
+    if (!ex.name) continue; // 跳過空白資料
+
     const safeName = ex.name.replace(/[\/\[\]#$.()\s（）]/g, "_");
     const history = userData.history?.[safeName] || {};
-    const lastWeight = Object.values(history).pop() || ex.weight;
+    const lastWeight = Object.values(history).pop() || ex.weight || 0;
 
     const card = document.createElement("div");
     card.className = "card p-3 mb-3 shadow-sm";
     card.innerHTML = `
       <h4>${i + 1}. ${ex.name}</h4>
-      <p>組數：${ex.sets}　次數：${ex.reps}</p>
-      <p>休息：${ex.rest} 秒</p>
+      <p>組數：${ex.sets || "未設定"}　次數：${ex.reps || "未設定"}</p>
+      <p>休息：${ex.rest || "未設定"} 秒</p>
       <p class="weight">重量：${lastWeight} kg（根據上次訓練）</p>
       <div class="btn-group mb-2">
         <button class="btn btn-success add-btn">加重</button>
@@ -99,7 +110,6 @@ async function displayExercises(exercises) {
     const ctx = document.getElementById(`chart-${i}`);
     const dates = Object.keys(history);
     const weights = Object.values(history);
-
     new Chart(ctx, {
       type: "line",
       data: {
@@ -113,13 +123,16 @@ async function displayExercises(exercises) {
         }],
       },
       options: {
-        scales: {
-          y: { beginAtZero: true, title: { display: true, text: "重量 (kg)" } },
+        scales: { y: { beginAtZero: true } },
+        plugins: {
+          tooltip: {
+            callbacks: { label: ctx => `${ctx.parsed.y} kg` },
+          },
         },
       },
     });
 
-    // === 三個控制按鈕 ===
+    // === 加重 / 維持 / 減重 ===
     const addBtn = card.querySelector(".add-btn");
     const keepBtn = card.querySelector(".keep-btn");
     const reduceBtn = card.querySelector(".reduce-btn");
@@ -130,49 +143,38 @@ async function displayExercises(exercises) {
     async function saveWeightChange(newWeight) {
       const today = new Date().toISOString().split("T")[0];
       try {
-        await updateDoc(userRef, {
-          [`history.${safeName}.${today}`]: newWeight,
-        });
+        await updateDoc(userRef, { [`history.${safeName}.${today}`]: newWeight });
       } catch {
         await setDoc(userRef, { history: { [safeName]: { [today]: newWeight } } }, { merge: true });
       }
     }
 
-    addBtn.addEventListener("click", async () => {
+    addBtn.onclick = async () => {
       currentWeight += delta;
       weightText.textContent = `重量：${currentWeight.toFixed(1)} kg`;
       await saveWeightChange(currentWeight);
-    });
+    };
 
-    keepBtn.addEventListener("click", async () => {
-      alert(`💪 維持重量：${currentWeight.toFixed(1)} kg`);
+    keepBtn.onclick = async () => {
       await saveWeightChange(currentWeight);
-    });
+      alert(`💪 維持重量 ${currentWeight.toFixed(1)} kg`);
+    };
 
-    reduceBtn.addEventListener("click", async () => {
+    reduceBtn.onclick = async () => {
       currentWeight = Math.max(0, currentWeight - delta);
       weightText.textContent = `重量：${currentWeight.toFixed(1)} kg`;
       await saveWeightChange(currentWeight);
-    });
-  });
+    };
+  }
 
-  // === ✅ 完成訓練按鈕 ===
+  // === 完成訓練按鈕 ===
   const completeBtn = document.createElement("button");
   completeBtn.textContent = "✅ 完成訓練";
-  completeBtn.style = `
-    display:block;
-    margin:30px auto;
-    padding:12px 24px;
-    background-color:#28a745;
-    color:white;
-    border:none;
-    border-radius:8px;
-    font-size:16px;
-    cursor:pointer;
-  `;
+  completeBtn.className = "btn btn-success";
+  completeBtn.style = "display:block;margin:30px auto;padding:10px 20px;font-size:18px;";
   container.insertAdjacentElement("afterend", completeBtn);
 
-  completeBtn.addEventListener("click", async () => {
+  completeBtn.onclick = async () => {
     const today = new Date().toISOString().split("T")[0];
     const cards = document.querySelectorAll(".card");
     const updates = {};
@@ -188,23 +190,24 @@ async function displayExercises(exercises) {
 
     await updateDoc(userRef, updates);
 
-    // === 計算成長 ===
+    // === 成長百分比與總量圖 ===
     const userSnap = await getDoc(userRef);
-    const historyData = userSnap.data().history || {};
+    const allHistory = userSnap.data().history || {};
     const allDates = [];
-    for (const ex of Object.values(historyData)) {
+    for (const ex of Object.values(allHistory))
       for (const d of Object.keys(ex)) if (!allDates.includes(d)) allDates.push(d);
-    }
     allDates.sort();
+
     const lastDate = allDates[allDates.length - 2];
     let lastTotal = 0;
     if (lastDate) {
-      for (const ex of Object.values(historyData)) if (ex[lastDate]) lastTotal += ex[lastDate];
+      for (const ex of Object.values(allHistory))
+        if (ex[lastDate]) lastTotal += ex[lastDate];
     }
     const growth = lastTotal ? (((todayTotal - lastTotal) / lastTotal) * 100).toFixed(1) : 0;
 
     const resultDiv = document.createElement("div");
-    resultDiv.style = "margin:20px auto; text-align:center; font-size:18px;";
+    resultDiv.style = "text-align:center;margin:20px auto;font-size:18px;";
     resultDiv.innerHTML = `
       <hr>
       🏋️‍♂️ 本次總訓練重量：${todayTotal.toFixed(1)} kg<br>
@@ -215,21 +218,21 @@ async function displayExercises(exercises) {
     `;
     completeBtn.insertAdjacentElement("afterend", resultDiv);
 
-    // === 繪製總量折線圖 ===
-    const dateTotals = {};
+    // === 總量折線圖 ===
+    const totalByDate = {};
     allDates.forEach(date => {
       let total = 0;
-      for (const ex of Object.values(historyData)) if (ex[date]) total += ex[date];
-      dateTotals[date] = total;
+      for (const ex of Object.values(allHistory)) if (ex[date]) total += ex[date];
+      totalByDate[date] = total;
     });
 
     new Chart(document.getElementById("summaryChart"), {
       type: "line",
       data: {
-        labels: Object.keys(dateTotals),
+        labels: Object.keys(totalByDate),
         datasets: [{
           label: "總訓練重量 (kg)",
-          data: Object.values(dateTotals),
+          data: Object.values(totalByDate),
           borderColor: "#28a745",
           backgroundColor: "rgba(40,167,69,0.1)",
           tension: 0.2,
@@ -237,6 +240,5 @@ async function displayExercises(exercises) {
       },
       options: { scales: { y: { beginAtZero: true } } },
     });
-  });
+  };
 }
-
