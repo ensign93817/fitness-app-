@@ -254,6 +254,7 @@ for (const { name, chart } of charts) {
 }
 alert(`✅ 今日訓練總重量：${totalToday.toFixed(1)} kg 已儲存！`);
 // === 頁面載入後執行 ===
+// === 頁面載入後執行 ===
 window.addEventListener("DOMContentLoaded", () => {
   // 1️⃣ 檢查使用者名稱是否存在
   let userName = localStorage.getItem("userName");
@@ -293,4 +294,3 @@ window.addEventListener("DOMContentLoaded", () => {
     console.error("❌ 找不到切換使用者按鈕");
   }
 }); // ✅ 這裡是成對結尾
-    {
