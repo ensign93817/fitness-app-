@@ -22,6 +22,15 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+window.addEventListener("DOMContentLoaded", () => {
+  let userName = localStorage.getItem("userName");
+  if (!userName) {
+    userName = prompt("請輸入您的使用者名稱：");
+    localStorage.setItem("userName", userName);
+  }
+  console.log("登入使用者：", userName);
+});
+
 // === 顯示上次訓練目標與部位 ===
 const lastGoal = localStorage.getItem("lastGoal");
 const lastPart = localStorage.getItem("lastPart");
