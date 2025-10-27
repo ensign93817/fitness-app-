@@ -218,29 +218,3 @@ async function displayExercises(exercises) {
     await updateDoc(userRef, updates);
     alert(`✅ 今日總訓練重量：${todayTotal.toFixed(1)} kg 已儲存！`);
   });
-}
-  // === ✅ 完成訓練按鈕 ===
-  const completeBtn = document.createElement("button");
-  completeBtn.id = "completeTrainingBtn";
-  completeBtn.textContent = "✅ 完成訓練";
-  completeBtn.className = "btn btn-success";
-  completeBtn.style = "display:block;margin:30px auto;padding:10px 20px;font-size:18px;";
-  container.insertAdjacentElement("afterend", completeBtn);
-
-  completeBtn.addEventListener("click", async () => {
-    const today = new Date().toISOString().split("T")[0];
-    const cards = document.querySelectorAll(".card");
-    const updates = {};
-    let todayTotal = 0;
-
-    cards.forEach(card => {
-      const name = card.querySelector("h4").textContent;
-      const safeName = name.replace(/[\/\[\]#$.()\s（）]/g, "_");
-      const weight = parseFloat(card.querySelector(".weight").textContent.replace(/[^\d.]/g, ""));
-      updates[`history.${safeName}.${today}`] = weight;
-      todayTotal += weight;
-    });
-
-    await updateDoc(userRef, updates);
-    alert(`✅ 今日總訓練重量：${todayTotal.toFixed(1)} kg 已儲存！`);
-  });
