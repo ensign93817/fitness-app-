@@ -92,13 +92,13 @@ if (!window.hasBoundLoadMenu) {
     }
   });
 }
-
+// === 顯示訓練動作 ===
 async function displayExercises(exercises) {
   container.innerHTML = "";
   const oldBtn = document.getElementById("completeTrainingBtn");
   if (oldBtn) oldBtn.remove();
 
-  // 🔹 去除重複動作（根據 name）
+  // 🔹 去除重複項目
   const uniqueExercises = [];
   const names = new Set();
   for (const ex of exercises) {
@@ -108,30 +108,12 @@ async function displayExercises(exercises) {
     }
   }
 
-  // 後續使用 uniqueExercises 而非原本的 exercises
   const userName = localStorage.getItem("userName") || "guestUser";
   const userRef = doc(db, "profiles", userName);
   const userSnap = await getDoc(userRef);
   const userData = userSnap.exists() ? userSnap.data() : {};
 
   uniqueExercises.forEach((ex, i) => {
-    if (!ex.name) return;
-    ...
-  });
-}
-
-// === 顯示訓練動作 ===
-async function displayExercises(exercises) {
-  container.innerHTML = "";
-  const oldBtn = document.getElementById("completeTrainingBtn");
-  if (oldBtn) oldBtn.remove();
-
-  const userName = localStorage.getItem("userName") || "guestUser";
-  const userRef = doc(db, "profiles", userName);
-  const userSnap = await getDoc(userRef);
-  const userData = userSnap.exists() ? userSnap.data() : {};
-
-  exercises.forEach((ex, i) => {
     if (!ex.name) return;
 
     const safeName = ex.name.replace(/[\/\[\]#$.()\s（）]/g, "_");
@@ -143,9 +125,9 @@ async function displayExercises(exercises) {
     card.innerHTML = `
       <h4>${i + 1}. ${ex.name}</h4>
       <p>組數：${ex.sets || ex.set || "未設定"}　
-   次數：${ex.reps || ex.rep || "未設定"}</p>
-<p>休息：${ex.rest || ex.restTime || "未設定"} 秒</p>
-<p class="weight">重量：${ex.weight || ex.weightKG || lastWeight || 0} kg（根據上次訓練）</p>
+         次數：${ex.reps || ex.rep || "未設定"}</p>
+      <p>休息：${ex.rest || ex.restTime || "未設定"} 秒</p>
+      <p class="weight">推薦重量：${lastWeight > 0 ? lastWeight + " kg" : "尚未有紀錄"}（根據上次訓練）</p>
 
       <div class="btn-group mb-2">
         <button class="btn btn-success add-btn">加重</button>
@@ -211,6 +193,32 @@ async function displayExercises(exercises) {
     });
   });
 
+  // === ✅ 完成訓練按鈕 ===
+  const completeBtn = document.createElement("button");
+  completeBtn.id = "completeTrainingBtn";
+  completeBtn.textContent = "✅ 完成訓練";
+  completeBtn.className = "btn btn-success";
+  completeBtn.style = "display:block;margin:30px auto;padding:10px 20px;font-size:18px;";
+  container.insertAdjacentElement("afterend", completeBtn);
+
+  completeBtn.addEventListener("click", async () => {
+    const today = new Date().toISOString().split("T")[0];
+    const cards = document.querySelectorAll(".card");
+    const updates = {};
+    let todayTotal = 0;
+
+    cards.forEach(card => {
+      const name = card.querySelector("h4").textContent;
+      const safeName = name.replace(/[\/\[\]#$.()\s（）]/g, "_");
+      const weight = parseFloat(card.querySelector(".weight").textContent.replace(/[^\d.]/g, ""));
+      updates[`history.${safeName}.${today}`] = weight;
+      todayTotal += weight;
+    });
+
+    await updateDoc(userRef, updates);
+    alert(`✅ 今日總訓練重量：${todayTotal.toFixed(1)} kg 已儲存！`);
+  });
+}
   // === ✅ 完成訓練按鈕 ===
   const completeBtn = document.createElement("button");
   completeBtn.id = "completeTrainingBtn";
