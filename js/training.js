@@ -42,6 +42,9 @@ const container = document.getElementById("exerciseContainer");
 if (!window.menuLoadBound) {
   window.menuLoadBound = true;
 
+ if (!window.hasBoundLoadMenu) {
+  window.hasBoundLoadMenu = true;
+
   loadBtn.addEventListener("click", async () => {
     const userName = localStorage.getItem("userName") || "guestUser";
     console.log(`當前登入使用者：${userName}`);
@@ -53,6 +56,8 @@ if (!window.menuLoadBound) {
 
     const docRef = doc(db, "menus", `${goal}_${part}`);
     container.innerHTML = "<p>⏳ 正在載入中...</p>";
+  });
+} // <== 新增的關閉括號
 
     // 移除舊的完成訓練按鈕
     const oldBtn = document.getElementById("completeTrainingBtn");
@@ -83,6 +88,9 @@ if (!window.menuLoadBound) {
 // === 顯示訓練動作 ===
 async function displayExercises(exercises) {
   container.innerHTML = "";
+  const oldBtn = document.getElementById("completeTrainingBtn");
+  if (oldBtn) oldBtn.remove();
+
   const userName = localStorage.getItem("userName") || "guestUser";
   const userRef = doc(db, "profiles", userName);
   const userSnap = await getDoc(userRef);
@@ -99,9 +107,11 @@ async function displayExercises(exercises) {
     card.className = "card p-3 mb-3 shadow-sm";
     card.innerHTML = `
       <h4>${i + 1}. ${ex.name}</h4>
-      <p>組數：${ex.sets || "未設定"}　次數：${ex.reps || "未設定"}</p>
-      <p>休息：${ex.rest || "未設定"} 秒</p>
-      <p class="weight">重量：${lastWeight} kg（根據上次訓練）</p>
+      <p>組數：${ex.sets || ex.set || "未設定"}　
+   次數：${ex.reps || ex.rep || "未設定"}</p>
+<p>休息：${ex.rest || ex.restTime || "未設定"} 秒</p>
+<p class="weight">重量：${ex.weight || ex.weightKG || lastWeight || 0} kg（根據上次訓練）</p>
+
       <div class="btn-group mb-2">
         <button class="btn btn-success add-btn">加重</button>
         <button class="btn btn-primary keep-btn">維持</button>
