@@ -69,27 +69,24 @@ if (!window.menuLoadBound) {
 } // <== 新增的關閉括號
 
     // 移除舊的完成訓練按鈕
-    const oldBtn = document.getElementById("completeTrainingBtn");
-    if (oldBtn) oldBtn.remove();
+try {
+  const docSnap = await getDoc(docRef);
+  if (!docSnap.exists()) {
+    container.innerHTML = "<p>⚠️ 查無此訓練菜單。</p>";
+    return; // ⚠️ 沒資料直接結束
+  }
 
-    try {
-      const docSnap = await getDoc(docRef);
-      if (!docSnap.exists()) {
-        container.innerHTML = "<p>⚠️ 查無此訓練菜單。</p>";
-      }
+  const data = docSnap.data();
+  if (!data.exercises || !Array.isArray(data.exercises)) {
+    container.innerHTML = "<p>⚠️ 菜單資料格式錯誤。</p>";
+    return; // ⚠️ 資料格式錯誤直接結束
+  }
 
-      const data = docSnap.data();
-      if (!data.exercises || !Array.isArray(data.exercises)) {
-        container.innerHTML = "<p>⚠️ 菜單資料格式錯誤。</p>";
-      }
-
-      console.log("成功載入 Firestore 文件：", data);
-      await displayExercises(data.exercises);
-    } catch (error) {
-      console.error("載入菜單錯誤：", error);
-      container.innerHTML = "<p>❌ 無法讀取資料，請稍後再試。</p>";
-    }
-  });
+  console.log("✅ 成功載入 Firestore 文件：", data);
+  await displayExercises(data.exercises);
+} catch (error) {
+  console.error("❌ 載入過程錯誤：", error);
+  container.innerHTML = "<p>❌ 無法讀取資料，請稍後再試。</p>";
 }
 
 // === 顯示訓練動作 ===
