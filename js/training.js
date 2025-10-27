@@ -75,7 +75,6 @@ async function displayExercises(exercises) {
   const userSnap = await getDoc(userRef);
   const userData = userSnap.exists() ? userSnap.data() : {};
 
-  // === 每個動作卡片 ===
   exercises.forEach((ex, i) => {
     const safeName = ex.name.replace(/[\/\[\]#$.()\s（）]/g, "_");
     const history = userData.history?.[safeName] || {};
@@ -87,7 +86,7 @@ async function displayExercises(exercises) {
       <h4>${i + 1}. ${ex.name}</h4>
       <p>組數：${ex.sets}　次數：${ex.reps}</p>
       <p>休息：${ex.rest} 秒</p>
-      <p class="weight">重量：${lastWeight} kg（系統推薦值）</p>
+      <p class="weight">重量：${lastWeight} kg（根據上次訓練）</p>
       <div class="btn-group mb-2">
         <button class="btn btn-success add-btn">加重</button>
         <button class="btn btn-primary keep-btn">維持</button>
@@ -136,11 +135,7 @@ async function displayExercises(exercises) {
           [`history.${safeName}.${today}`]: newWeight,
         });
       } catch {
-        await setDoc(
-          userRef,
-          { history: { [safeName]: { [today]: newWeight } } },
-          { merge: true }
-        );
+        await setDoc(userRef, { history: { [safeName]: { [today]: newWeight } } }, { merge: true });
       }
     }
 
@@ -162,7 +157,7 @@ async function displayExercises(exercises) {
     });
   });
 
-  // === 菜單底部「完成訓練」按鈕 ===
+  // === 完成訓練按鈕 ===
   const completeBtn = document.createElement("button");
   completeBtn.textContent = "✅ 完成訓練";
   completeBtn.style = `
@@ -182,20 +177,54 @@ async function displayExercises(exercises) {
     const today = new Date().toISOString().split("T")[0];
     const cards = document.querySelectorAll(".card");
     const updates = {};
+    let todayTotal = 0;
 
-    cards.forEach((card) => {
+    cards.forEach(card => {
       const name = card.querySelector("h4").textContent;
       const safeName = name.replace(/[\/\[\]#$.()\s（）]/g, "_");
-      const weight = parseFloat(
-        card.querySelector(".weight").textContent.replace(/[^\d.]/g, "")
-      );
+      const weight = parseFloat(card.querySelector(".weight").textContent.replace(/[^\d.]/g, ""));
       updates[`history.${safeName}.${today}`] = weight;
+      todayTotal += weight;
     });
 
     try {
       await updateDoc(userRef, updates);
-      alert("✅ 今日訓練紀錄已完成！");
-      location.reload();
+
+      // 取得上次總量
+      const userSnap = await getDoc(userRef);
+      const historyData = userSnap.data().history || {};
+      const allDates = [];
+
+      for (const ex of Object.values(historyData)) {
+        for (const date of Object.keys(ex)) {
+          if (!allDates.includes(date)) allDates.push(date);
+        }
+      }
+      allDates.sort();
+      const lastDate = allDates[allDates.length - 2];
+      let lastTotal = 0;
+
+      if (lastDate) {
+        for (const ex of Object.values(historyData)) {
+          if (ex[lastDate]) lastTotal += ex[lastDate];
+        }
+      }
+
+      const growth = lastTotal ? (((todayTotal - lastTotal) / lastTotal) * 100).toFixed(1) : 0;
+
+      const resultDiv = document.createElement("div");
+      resultDiv.style =
+        "margin:20px auto; text-align:center; font-size:18px; color:#333;";
+      resultDiv.innerHTML = `
+        <hr>
+        🏋️‍♂️ <b>本次總訓練重量：</b>${todayTotal.toFixed(1)} kg<br>
+        ${lastDate
+          ? `📈 與上次 (${lastDate}) 相比：<b>${growth}%</b> ${
+              growth >= 0 ? "成長" : "下降"
+            }`
+          : "📊 這是你的第一次訓練紀錄！"}
+      `;
+      completeBtn.insertAdjacentElement("afterend", resultDiv);
     } catch (error) {
       console.error(error);
       alert("⚠️ 儲存失敗，請稍後再試。");
