@@ -276,4 +276,5 @@ window.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
-}); // ← 關閉 DOMContentLoaded 監聽器
+}); 
+});
