@@ -292,4 +292,4 @@ window.addEventListener("DOMContentLoaded", () => {
   } else {
     console.error("❌ 找不到切換使用者按鈕");
   }
-}); // ✅ ← 千萬別忘記這兩個括號
+}); // ✅ 一定要有這行
