@@ -113,20 +113,17 @@ async function displayExercises(exercises) {
   const userSnap = await getDoc(userRef);
   const userData = userSnap.exists() ? userSnap.data() : {};
 
- uniqueExercises.forEach((ex, i) => {
+uniqueExercises.forEach((ex, i) => {
   if (!ex.name) return;
 
   const safeName = ex.name.replace(/[\/\[\]#$.()\s（）]/g, "_");
   const history = userData.history?.[safeName] || {};
 
-  // ✅ 兼容不同命名方式（defaultXXX、中文、英文）
   const sets = ex.sets || ex.defaultSets || ex["組數"] || "未設定";
   const reps = ex.reps || ex.defaultReps || ex["次數"] || "未設定";
   const rest = ex.rest || ex.restSec || ex["休息"] || "未設定";
   const baseWeight =
     ex.weight || ex.defaultWeight || ex["重量"] || ex["weightKG"] || 0;
-
-  // ✅ 若使用者有歷史紀錄，用最後一次紀錄；否則用菜單預設
   const lastWeight = Object.values(history).pop() || baseWeight;
 
   const card = document.createElement("div");
@@ -147,29 +144,32 @@ async function displayExercises(exercises) {
     <canvas id="chart-${i}" height="120"></canvas>
   `;
   container.appendChild(card);
-});
 
-    // === 折線圖 ===
-    const ctx = document.getElementById(`chart-${i}`);
-    const dates = Object.keys(history);
-    const weights = Object.values(history);
+  // === 折線圖 === （⚠️ 這段一定要放在 forEach 內）
+  const ctx = document.getElementById(`chart-${i}`);
+  const dates = Object.keys(history);
+  const weights = Object.values(history);
 
-    new Chart(ctx, {
-      type: "line",
-      data: {
-        labels: dates.length ? dates : [new Date().toISOString().split("T")[0]],
-        datasets: [{
-          label: "歷史重量 (kg)",
+  new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: dates.length ? dates : [new Date().toISOString().split("T")[0]],
+      datasets: [
+        {
+          label: "重量變化 (kg)",
           data: weights.length ? weights : [lastWeight],
           borderColor: "#007bff",
           backgroundColor: "rgba(0,123,255,0.1)",
           tension: 0.2,
-        }],
-      },
-      options: { scales: { y: { beginAtZero: true } } },
         },
-      });
-    });
+      ],
+    },
+    options: {
+      scales: { y: { beginAtZero: true } },
+    },
+  });
+}); // ← 確保 forEach 在這裡才結束！
+
 
     // === 加重 / 維持 / 減重 ===
     const addBtn = card.querySelector(".add-btn");
