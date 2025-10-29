@@ -1,3 +1,10 @@
+// 取得「本地時區」的 YYYY-MM-DD（避免 toISOString() 用 UTC 扣一天）
+function localISODate() {
+  const d = new Date();
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); // 抵銷時區
+  return d.toISOString().slice(0, 10); // 只取 YYYY-MM-DD
+}
+
 // === Firebase SDK 載入 ===
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import {
@@ -143,34 +150,29 @@ uniqueExercises.forEach((ex, i) => {
   `;
   container.appendChild(card);
 
-  // === 折線圖 ===
-  // === 全域變數：用來存放所有動作對應的圖表 ===
-const charts = [];
-const ctx = document.getElementById(`chart-${i}`);
-const historyData = userData.history?.[safeName] || {};
-const dates = Object.keys(historyData);
-const weights = Object.values(historyData);
+    // === 折線圖（日期排序 + 本地日期） ===
+    const ctx = document.getElementById(`chart-${i}`);
+    const historyData = userData.history?.[safeName] || {};
 
-const chart = new Chart(ctx, {
-  type: "line",
-  data: {
-    labels: dates.length ? dates : [new Date().toISOString().split("T")[0]],
-    datasets: [{
-      label: "重量變化 (kg)",
-      data: weights.length ? weights : [lastWeight],
-      borderColor: "#007bff",
-      backgroundColor: "rgba(0,123,255,0.1)",
-      tension: 0.2
-    }]
-  },
-  options: { scales: { y: { beginAtZero: true } } }
-});
-// ✅ 把 push 放在這裡（圖表建立好之後）
-charts.push({ name: safeName, chart });
-  
-// 把圖表暫存起來，以後更新用
-charts.push({ name: safeName, chart });
+    const dates = Object.keys(historyData).sort((a, b) => (a > b ? 1 : -1));
+    const weights = dates.map(d => historyData[d]);
 
+    const chart = new Chart(ctx, {
+      type: "line",
+      data: {
+        labels: dates.length ? dates : [localISODate()],
+        datasets: [{
+          label: "重量變化 (kg)",
+          data: weights.length ? weights : [lastWeight],
+          borderColor: "#007bff",
+          backgroundColor: "rgba(0,123,255,0.1)",
+          tension: 0.2
+        }]
+      },
+      options: { scales: { y: { beginAtZero: true } } }
+    });
+
+    charts.push({ name: safeName, chart });
 
   // === 加重 / 維持 / 減重 ===
   const addBtn = card.querySelector(".add-btn");
@@ -181,7 +183,7 @@ charts.push({ name: safeName, chart });
   let currentWeight = lastWeight;
 
   async function saveWeightChange(newWeight) {
-    const today = new Date().toISOString().split("T")[0];
+    const today = localISODate();
     try {
       await updateDoc(userRef, { [`history.${safeName}.${today}`]: newWeight });
     } catch {
@@ -233,17 +235,17 @@ for (const card of cards) {
   totalToday += weight;
 }
 
-try {
-  await updateDoc(userRef, updates);
-} catch (e) {
-  if (e.code === "not-found") {
-    await setDoc(userRef, updates, { merge: true });
-  } else {
+  try {
+    // ✅ 逐筆更新，避免覆蓋舊日期
+    for (const [k, v] of Object.entries(updates)) {
+      await updateDoc(userRef, { [k]: v });
+    }
+  } catch (e) {
     console.error("寫入錯誤：", e);
   }
 }
     // === 即時更新折線圖 ===
-const todayStr = new Date().toISOString().split("T")[0];
+const todayStr = today;
 for (const { name, chart } of charts) {
   const weight = updates[`history.${name}.${todayStr}`];
   if (weight !== undefined) {
