@@ -257,9 +257,6 @@ for (const card of cards) {
     alert(`✅ 今日訓練總重量：${totalToday.toFixed(1)} kg 已儲存！`);
   });
 }
-alert(`✅ 今日訓練總重量：${totalToday.toFixed(1)} kg 已儲存！`);
-  }); // ✅ 補上這一行，結束 completeBtn 的 click 事件
-} 
 
 // === 頁面載入後執行 ===
 window.addEventListener("DOMContentLoaded", () => {
