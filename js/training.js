@@ -243,16 +243,19 @@ for (const card of cards) {
   } catch (e) {
     console.error("寫入錯誤：", e);
   }
-}
-    // === 即時更新折線圖 ===
-const todayStr = today;
-for (const { name, chart } of charts) {
-  const weight = updates[`history.${name}.${todayStr}`];
-  if (weight !== undefined) {
-    chart.data.labels.push(todayStr);
-    chart.data.datasets[0].data.push(weight);
-    chart.update(); // 立即刷新畫面
-  }
+
+     // === 即時更新折線圖 ===
+    for (const { name, chart } of charts) {
+      const weight = updates[`history.${name}.${today}`];
+      if (weight !== undefined) {
+        chart.data.labels.push(today);
+        chart.data.datasets[0].data.push(weight);
+        chart.update();
+      }
+    }
+
+    alert(`✅ 今日訓練總重量：${totalToday.toFixed(1)} kg 已儲存！`);
+  });
 }
 alert(`✅ 今日訓練總重量：${totalToday.toFixed(1)} kg 已儲存！`);
   }); // ✅ 補上這一行，結束 completeBtn 的 click 事件
