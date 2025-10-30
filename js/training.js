@@ -286,22 +286,4 @@ window.addEventListener("DOMContentLoaded", async () => {
       `<div style="margin:10px 0;">👤 當前使用者：<b>${userName}</b></div>`
     );
   }
-
-  // 🚫 不再需要「切換使用者」按鈕
 });
-
-  // 3️⃣ 綁定「切換使用者」按鈕
-  const changeBtn = document.getElementById("changeUserBtn");
-  if (changeBtn) {
-    changeBtn.addEventListener("click", () => {
-      const newUser = prompt("輸入新的使用者名稱：");
-      if (newUser) {
-        localStorage.setItem("userName", newUser);
-        alert(`✅ 已切換為使用者：${newUser}`);
-        location.reload();
-      }
-    });
-  } else {
-    console.error("❌ 找不到切換使用者按鈕");
-  }
-}); // ✅ 這行是結尾，一定要有
