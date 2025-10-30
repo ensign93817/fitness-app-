@@ -131,3 +131,21 @@ select, button {
   margin: 8px; /* 讓兩個按鈕之間保留一點距離 */
 }
 </style>
+/* ====== 首頁藍色按鈕微縮樣式 ====== */
+.btn-primary {
+  background-color: #007bff;
+  border: none;
+  padding: 8px 14px;  /* 原本 12px~20px 改小 */
+  font-size: 15px;    /* 縮小字體 */
+  border-radius: 6px;
+  transition: all 0.2s ease-in-out;
+}
+
+.btn-primary:hover {
+  background-color: #0056b3;
+  transform: scale(1.03); /* 滑鼠移上去微微放大 */
+}
+
+.card .btn {
+  margin: 6px; /* 讓兩顆按鈕之間距離稍微縮小 */
+}
