@@ -259,22 +259,26 @@ for (const card of cards) {
 }
 
 // === 頁面載入後執行 ===
-window.addEventListener("DOMContentLoaded", () => {
-  // 1️⃣ 檢查使用者名稱是否存在
+window.addEventListener("DOMContentLoaded", async () => {
+  // 🧩 一進入頁面就詢問使用者（若已存在可選擇是否更換）
   let userName = localStorage.getItem("userName");
-  if (!userName) {
-    userName = prompt("請輸入您的使用者名稱：");
-    if (userName) {
+
+  if (userName) {
+    const change = confirm(`目前登入使用者為「${userName}」，是否要切換？`);
+    if (change) {
+      userName = prompt("請輸入新的使用者名稱：") || userName;
       localStorage.setItem("userName", userName);
-    } else {
-      userName = "guestUser";
-      localStorage.setItem("userName", userName);
+      alert(`✅ 已切換為使用者：${userName}`);
     }
+  } else {
+    userName = prompt("請輸入您的使用者名稱：") || "guestUser";
+    localStorage.setItem("userName", userName);
+    alert(`👋 歡迎 ${userName}！`);
   }
 
   console.log("登入使用者：", userName);
 
-  // 2️⃣ 顯示目前使用者
+  // 🧾 顯示目前使用者名稱在頁面上方
   const h2 = document.querySelector("h2");
   if (h2) {
     h2.insertAdjacentHTML(
@@ -282,6 +286,9 @@ window.addEventListener("DOMContentLoaded", () => {
       `<div style="margin:10px 0;">👤 當前使用者：<b>${userName}</b></div>`
     );
   }
+
+  // 🚫 不再需要「切換使用者」按鈕
+});
 
   // 3️⃣ 綁定「切換使用者」按鈕
   const changeBtn = document.getElementById("changeUserBtn");
