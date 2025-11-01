@@ -174,8 +174,8 @@ async function displayExercises(db, userName, exercises) {
     card.className = "card p-3 mb-3 shadow-sm";
     card.innerHTML = `
       <h4>${i + 1}. ${ex.name}</h4>
-      <p>組數：${ex.sets || "未設定"}　次數：${ex.reps || "未設定"}</p>
-      <p>休息：${ex.rest || "未設定"} 秒</p>
+      <p>組數：${ex.defaultSets || "未設定"}　次數：${ex.defaultReps || "未設定"}</p>
+      <p>休息：${ex.restSec || "未設定"} 秒</p>
       <p class="weight">推薦重量：${lastWeight || "尚未有紀錄"} kg</p>
       <div class="btn-group mb-2">
         <button class="btn btn-success add-btn">加重</button>
@@ -243,6 +243,8 @@ async function displayExercises(db, userName, exercises) {
       await saveWeightChange(currentWeight);
     });
   }
+// 🧩 避免重複建立「完成訓練」按鈕
+if (document.getElementById("completeTrainingBtn")) return;
 
   // === ✅ 完成訓練按鈕 ===
   const completeBtn = document.createElement("button");
@@ -308,6 +310,6 @@ try {
 // === 🚀 頁面啟動 ===
 window.addEventListener("DOMContentLoaded", async () => {
   const userName = await initUser();
-  showLastTraining();
+  await showLastTraining();
   document.getElementById("loadBtn")?.addEventListener("click", () => loadMenu(db, userName));
 });
