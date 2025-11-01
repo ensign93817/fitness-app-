@@ -68,12 +68,13 @@ async function initUser() {
 }
 
 // === 💪 顯示上次訓練目標與部位 ===
+// === 💪 顯示上次訓練目標與部位 ===
 async function showLastTraining() {
-  const activeUser = localStorage.getItem("userName");
-  if (!activeUser) return;
+  const userName = localStorage.getItem("userName"); // ✅ 統一名稱
+  if (!userName) return;
 
   try {
-    const userSnap = await getDoc(doc(db, "profiles", userName));
+    const userSnap = await getDoc(doc(db, "profiles", userName)); // ✅ 用 userName 抓資料
     const data = userSnap.data();
     if (data?.lastTraining) {
       const infoDiv = document.createElement("div");
@@ -82,10 +83,9 @@ async function showLastTraining() {
       document.querySelector("h2")?.insertAdjacentElement("beforebegin", infoDiv);
     }
   } catch (e) {
-    console.warn("無法讀取上次訓練紀錄：", e);
+    console.warn("❌ 無法讀取上次訓練紀錄：", e);
   }
 }
-
 
 // === 📦 載入菜單 ===
 async function loadMenu(db, userName) {
