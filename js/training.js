@@ -277,20 +277,6 @@ completeBtn.addEventListener("click", async () => {
     for (const [k, v] of Object.entries(updates)) {
       await updateDoc(userRef, { [k]: v });
     }
-
-    // ✅ 同步更新 lastTraining (顯示上次訓練用)
-    await setDoc(
-       doc(db, "profiles", localStorage.getItem("userName")),
-      {
-        lastTraining: {
-          goal: localStorage.getItem("lastGoal"),
-          bodyPart: localStorage.getItem("lastPart"),
-          date: today,
-        },
-      },
-      { merge: true }
-    );
-
     // 📈 更新折線圖（即時顯示新資料）
     for (const { safeName, chart } of charts) {
       const w = updates[`history.${safeName}.${today}`];
@@ -307,6 +293,18 @@ completeBtn.addEventListener("click", async () => {
         chart.update();
       }
     }
+    // ✅ 同步更新 lastTraining (顯示上次訓練用)
+    await setDoc(
+       doc(db, "profiles", localStorage.getItem("userName")),
+      {
+        lastTraining: {
+          goal: localStorage.getItem("lastGoal"),
+          bodyPart: localStorage.getItem("lastPart"),
+          date: today,
+        },
+      },
+      { merge: true }
+    );
 
     // 🎉 完成提示
     alert(`✅ 今日訓練完成！總重量：${total.toFixed(1)} kg 已儲存。`);
@@ -316,7 +314,6 @@ completeBtn.addEventListener("click", async () => {
     alert("❌ 訓練儲存失敗，請稍後再試。");
   }
 });
-}
 
 // === 🚀 頁面啟動 ===
 window.addEventListener("DOMContentLoaded", async () => {
