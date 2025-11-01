@@ -252,6 +252,7 @@ async function displayExercises(db, userName, exercises) {
 
     try {
       const userRef = doc(db, "profiles", localStorage.getItem("userName"));
+      console.log("🚀 開始寫入 Firestore updates：", updates);
       await setDoc(userRef, { createdAt: new Date().toISOString() }, { merge: true });
 
       for (const [k, v] of Object.entries(updates)) {
