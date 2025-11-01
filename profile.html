@@ -1,166 +1,165 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>建立個人資料 | Fitness App</title>
-
-  <!-- 字型與樣式 -->
+  <link rel="stylesheet" href="./css/style.css" />
   <style>
     body {
       font-family: "Noto Sans TC", sans-serif;
-      background-color: #f8f9fa;
-      color: #333;
-      text-align: center;
-      padding: 40px 10px;
+      background-color: #fafafa;
+      color: #222;
+      margin: 0;
+      padding: 0;
     }
 
-    h1 {
-      color: #222;
+    /* 導覽列 */
+    header {
+      background-color: #fff;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      padding: 15px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    header h1 {
+      font-size: 20px;
+      color: #333;
+      margin: 0;
+    }
+
+    nav a {
+      text-decoration: none;
+      margin-left: 20px;
+      color: #444;
+      font-weight: 500;
+      transition: color 0.2s ease;
+    }
+
+    nav a:hover {
+      color: #007bff;
+    }
+
+    nav a.active {
+      color: #007bff;
+      font-weight: 700;
+    }
+
+    /* 主內容 */
+    main {
+      max-width: 800px;
+      margin: 40px auto;
+      background-color: #fff;
+      padding: 40px;
+      border-radius: 16px;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+    }
+
+    h2 {
+      text-align: center;
       margin-bottom: 10px;
     }
 
     p.desc {
-      color: #555;
+      text-align: center;
       font-size: 15px;
+      color: #666;
       margin-bottom: 30px;
     }
 
     form {
-      background: #fff;
+      width: 100%;
       max-width: 400px;
-      margin: 0 auto;
-      padding: 25px;
-      border-radius: 15px;
-      box-shadow: 0 3px 8px rgba(0,0,0,0.1);
-      text-align: left;
+      margin: auto;
     }
 
     label {
       display: block;
-      margin-top: 12px;
-      font-weight: 600;
-    }
-
-    input, select, button {
-      width: 100%;
-      padding: 8px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      margin-top: 5px;
-    }
-
-    button {
-      background-color: #007bff;
-      color: white;
-      border: none;
-      cursor: pointer;
-      margin-top: 20px;
-    }
-
-    button:hover {
-      opacity: 0.85;
-    }
-
-    .navbar {
-      margin-bottom: 25px;
-    }
-
-    .navbar a {
-      text-decoration: none;
-      padding: 10px 18px;
-      margin: 0 5px;
-      border-radius: 6px;
-      background-color: #e0e0e0;
-      color: #333;
+      margin-bottom: 6px;
       font-weight: 500;
     }
 
-    .navbar a:hover {
+    input, select {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 18px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 15px;
+    }
+
+    button {
+      display: block;
+      width: 100%;
       background-color: #007bff;
-      color: white;
+      color: #fff;
+      border: none;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    button:hover {
+      background-color: #0056d2;
+      transform: translateY(-2px);
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 60px;
+      font-size: 14px;
+      color: #666;
     }
   </style>
 </head>
 
 <body>
-  <div class="navbar">
-    <a href="index.html">🏠 首頁</a>
-    <a href="profile.html" style="background-color:#007bff;color:white;">🧍 建立個人資料</a>
-    <a href="training.html">💪 訓練推薦</a>
-  </div>
+  <!-- 🔹 導覽列 -->
+  <header>
+    <h1>🏋️‍♂️ Fitness App</h1>
+    <nav>
+      <a href="index.html">首頁</a>
+      <a href="profile.html" class="active">建立個人資料</a>
+      <a href="training.html">訓練推薦</a>
+    </nav>
+  </header>
 
-  <h1>建立個人資料</h1>
-  <p class="desc">此頁僅做資料蒐集與顯示，不參與同頁面的推薦決策（符合你的邏輯）。</p>
-<label for="userName">使用者名稱：</label>
-<input type="text" id="userName" placeholder="請輸入您的名稱" required>
+  <!-- 🔸 主內容 -->
+  <main>
+    <h2>建立個人資料</h2>
+    <p class="desc">此頁僅做資料收集與顯示，不參與頁面間的推薦決策（符合你的隱私）。</p>
 
-  <form id="profileForm">
-    <label for="gender">性別</label>
-    <select id="gender">
-      <option value="男">男</option>
-      <option value="女">女</option>
-    </select>
+    <form id="profileForm">
+      <label>使用者名稱：</label>
+      <input type="text" id="userName" placeholder="請輸入名稱" required />
 
-    <label for="age">年齡</label>
-    <input type="number" id="age" placeholder="請輸入年齡" required>
+      <label>性別：</label>
+      <select id="gender">
+        <option value="男">男</option>
+        <option value="女">女</option>
+      </select>
 
-    <label for="height">身高 (cm)</label>
-    <input type="number" id="height" placeholder="請輸入身高" required>
+      <label>年齡：</label>
+      <input type="number" id="age" placeholder="請輸入年齡" required />
 
-    <label for="weight">體重 (kg)</label>
-    <input type="number" id="weight" placeholder="請輸入體重" required>
+      <label>身高 (cm)：</label>
+      <input type="number" id="height" placeholder="請輸入身高" required />
 
-    <button type="submit">💾 儲存資料</button>
-  </form>
-  <p id="statusMsg" style="margin-top:20px;font-weight:500;"></p>
+      <label>體重 (kg)：</label>
+      <input type="number" id="weight" placeholder="請輸入體重" required />
 
-  <!-- Firebase SDK -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+      <button type="submit">儲存資料</button>
+    </form>
+  </main>
 
-    // Firebase 初始化
-    const firebaseConfig = {
-      apiKey: "AIzaSyBuR00DrC8sPatyDSO8PYj1Gqgf3BE0",
-      authDomain: "fitness-guide-9a8f3.firebaseapp.com",
-      projectId: "fitness-guide-9a8f3",
-      storageBucket: "fitness-guide-9a8f3.appspot.com",
-      messagingSenderId: "969288112649",
-      appId: "1:969288112649:web:58b58b074c1088b138d68",
-    };
+  <footer>
+    © 2025 Fitness App
+  </footer>
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-
-    // === 儲存資料 ===
-    const form = document.getElementById("profileForm");
-    const statusMsg = document.getElementById("statusMsg");
-
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-
-      const gender = document.getElementById("gender").value;
-      const age = parseInt(document.getElementById("age").value);
-      const height = parseFloat(document.getElementById("height").value);
-      const weight = parseFloat(document.getElementById("weight").value);
-
-      try {
-        await setDoc(doc(db, "profiles", "defaultUser"), {
-          gender, age, height, weight,
-          updatedAt: new Date().toISOString()
-        });
-        statusMsg.style.color = "green";
-        statusMsg.textContent = "✅ 資料已成功儲存！即將跳轉...";
-        setTimeout(() => {
-          window.location.href = "training.html";
-        }, 1000);
-      } catch (error) {
-        console.error("Firestore 寫入錯誤：", error);
-        statusMsg.style.color = "red";
-        statusMsg.textContent = "❌ 儲存失敗，請稍後再試。";
-      }
-    });
-  </script>
+  <script type="module" src="./js/profile.js"></script>
 </body>
 </html>
