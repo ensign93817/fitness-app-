@@ -69,11 +69,11 @@ async function initUser() {
 
 // === 💪 顯示上次訓練目標與部位 ===
 async function showLastTraining() {
-  const activeUser = localStorage.getItem("activeUser");
+  const activeUser = localStorage.getItem("userName");
   if (!activeUser) return;
 
   try {
-    const userSnap = await getDoc(doc(db, "profiles", activeUser));
+    const userSnap = await getDoc(doc(db, "profiles", userName));
     const data = userSnap.data();
     if (data?.lastTraining) {
       const infoDiv = document.createElement("div");
@@ -168,7 +168,8 @@ async function displayExercises(db, userName, exercises) {
     const history = userData.history?.[safeName] || {};
     const dates = Object.keys(history).sort();
     const weights = dates.map((d) => history[d]);
-    const lastWeight = weights.at(-1) || ex.weight || 0;
+    const lastWeight = weights.at(-1) || ex.defaultWeight || ex.weight || 10;
+
 
     const card = document.createElement("div");
     card.className = "card p-3 mb-3 shadow-sm";
