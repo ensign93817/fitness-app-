@@ -148,7 +148,7 @@ async function loadMenu(db, userName) {
 async function displayExercises(db, userName, exercises) {
   const container = document.getElementById("exerciseContainer");
   container.innerHTML = "";
-  const charts = [];
+  window.charts = [];
 
   // 🔹 去重
   const names = new Set();
@@ -254,37 +254,68 @@ if (document.getElementById("completeTrainingBtn")) return;
   completeBtn.style = "display:block;margin:30px auto;padding:10px 20px;font-size:18px;";
   container.insertAdjacentElement("afterend", completeBtn);
 
-  completeBtn.addEventListener("click", async () => {
-    const today = localISODate();
-    const cards = document.querySelectorAll(".card");
-    let total = 0;
-    const updates = {};
+// === ✅ 完成訓練按鈕事件 ===
+completeBtn.addEventListener("click", async () => {
+  const today = localISODate();
+  const cards = document.querySelectorAll(".card");
+  let total = 0;
+  const updates = {};
 
-    for (const card of cards) {
-      const name = card.querySelector("h4").textContent;
-      const safeName = name.replace(/[^\wㄱ-ㅎㅏ-ㅣ가-힣一-龥]/g, "_");
-      const weight =
-        parseFloat(card.querySelector(".weight").textContent.replace(/[^\d.]/g, "")) || 0;
-      updates[`history.${safeName}.${today}`] = weight;
-      total += weight;
+  for (const card of cards) {
+    const name = card.querySelector("h4").textContent;
+    const safeName = name.replace(/[^\wㄱ-ㅎㅏ-ㅣ가-힣一-龥]/g, "_");
+    const weight =
+      parseFloat(card.querySelector(".weight").textContent.replace(/[^\d.]/g, "")) || 0;
+    updates[`history.${safeName}.${today}`] = weight;
+    total += weight;
+  }
+
+  try {
+    // 📝 寫入 Firestore
+    const userRef = doc(db, "profiles", localStorage.getItem("userName"));
+    for (const [k, v] of Object.entries(updates)) {
+      await updateDoc(userRef, { [k]: v });
     }
 
-    try {
-      for (const [k, v] of Object.entries(updates)) {
-        await updateDoc(userRef, { [k]: v });
-      }
-    } catch (e) {
-      console.error("寫入錯誤：", e);
-    }
+    // ✅ 同步更新 lastTraining (顯示上次訓練用)
+    await setDoc(
+       doc(db, "profiles", localStorage.getItem("userName")),
+      {
+        lastTraining: {
+          goal: localStorage.getItem("lastGoal"),
+          bodyPart: localStorage.getItem("lastPart"),
+          date: today,
+        },
+      },
+      { merge: true }
+    );
 
+    // 📈 更新折線圖（即時顯示新資料）
     for (const { safeName, chart } of charts) {
       const w = updates[`history.${safeName}.${today}`];
-      if (w !== undefined && !chart.data.labels.includes(today)) {
-        chart.data.labels.push(today);
-        chart.data.datasets[0].data.push(w);
+      if (w !== undefined) {
+        const labels = chart.data.labels;
+        const data = chart.data.datasets[0].data;
+        if (!labels.includes(today)) {
+          labels.push(today);
+          data.push(w);
+        } else {
+          // 若已存在今天的日期，更新最後一個點
+          data[data.length - 1] = w;
+        }
         chart.update();
       }
     }
+
+    // 🎉 完成提示
+    alert(`✅ 今日訓練完成！總重量：${total.toFixed(1)} kg 已儲存。`);
+
+  } catch (e) {
+    console.error("❌ 訓練儲存失敗：", e);
+    alert("❌ 訓練儲存失敗，請稍後再試。");
+  }
+});
+
 // === 📝 更新使用者的上次訓練紀錄 ===
 try {
   await setDoc(
