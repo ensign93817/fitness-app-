@@ -1,34 +1,48 @@
-import { getDb, getLocalUID, doc, setDoc } from './firebase.js';
+import { getDb, doc, setDoc } from "./firebase.js";
 
+// 取得表單元素
+const form = document.getElementById("profileForm");
+const userNameInput = document.getElementById("userName");
+const genderInput = document.getElementById("gender");
+const ageInput = document.getElementById("age");
+const heightInput = document.getElementById("height");
+const weightInput = document.getElementById("weight");
 
-const form = document.getElementById('profileForm');
-const statusEl = document.getElementById('saveStatus');
+// Firestore 寫入
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
 
+  const userName = userNameInput.value.trim();
+  const gender = genderInput.value;
+  const age = Number(ageInput.value);
+  const height = Number(heightInput.value);
+  const weight = Number(weightInput.value);
 
-// 初始化：若 localStorage 有資料就填入
-(function preload(){
-const saved = JSON.parse(localStorage.getItem('profile')||'null');
-if(saved){
-for(const [k,v] of Object.entries(saved)){
-const el = form.elements.namedItem(k);
-if(el) el.value = v;
-}
-}
-})();
+  if (!userName) {
+    alert("請輸入使用者名稱！");
+    return;
+  }
 
+  try {
+    const db = getDb();
 
-form.addEventListener('submit', async (e)=>{
-e.preventDefault();
-const data = Object.fromEntries(new FormData(form).entries());
-localStorage.setItem('profile', JSON.stringify(data));
-statusEl.textContent = '已儲存（本機）…';
-try{
-const db = getDb();
-const uid = getLocalUID();
-await setDoc(doc(db, 'profiles', uid), data, { merge:true });
-statusEl.textContent = '已儲存到雲端 ✅';
-}catch(err){
-console.warn('firestore save skipped / failed', err);
-statusEl.textContent = '雲端未啟用或儲存失敗（僅本機）';
-}
+    // 建立文件：profiles/{userName}
+    await setDoc(doc(db, "profiles", userName), {
+      userName,
+      gender,
+      age,
+      height,
+      weight,
+      updatedAt: new Date().toISOString(),
+    });
+
+    // 儲存在 localStorage，供 training.html 使用
+    localStorage.setItem("activeUser", userName);
+
+    alert(`✅ ${userName} 資料已儲存成功！`);
+    window.location.href = "training.html"; // 自動跳轉至訓練推薦頁
+  } catch (err) {
+    console.error("Firestore 寫入錯誤：", err);
+    alert("❌ 資料儲存失敗，請稍後再試。");
+  }
 });
