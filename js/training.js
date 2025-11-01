@@ -255,69 +255,74 @@ if (document.getElementById("completeTrainingBtn")) return;
   completeBtn.style = "display:block;margin:30px auto;padding:10px 20px;font-size:18px;";
   container.insertAdjacentElement("afterend", completeBtn);
 
-// === ✅ 完成訓練按鈕事件 ===
-completeBtn.addEventListener("click", async () => {
-  const today = localISODate();
-  const cards = document.querySelectorAll(".card");
-  let total = 0;
-  const updates = {};
+  // === ✅ 完成訓練按鈕事件 ===
+  completeBtn.addEventListener("click", async () => {
+    const today = localISODate();
+    const cards = document.querySelectorAll(".card");
+    let total = 0;
+    const updates = {};
 
-  for (const card of cards) {
-    const name = card.querySelector("h4").textContent;
-    const safeName = name.replace(/[^\wㄱ-ㅎㅏ-ㅣ가-힣一-龥]/g, "_");
-    const weight =
-      parseFloat(card.querySelector(".weight").textContent.replace(/[^\d.]/g, "")) || 0;
-    updates[`history.${safeName}.${today}`] = weight;
-    total += weight;
-  }
-
-  try {
-    // 📝 寫入 Firestore
-    const userRef = doc(db, "profiles", localStorage.getItem("userName"));
-    for (const [k, v] of Object.entries(updates)) {
-      await updateDoc(userRef, { [k]: v });
+    for (const card of cards) {
+      const name = card.querySelector("h4").textContent;
+      const safeName = name.replace(/[^\wㄱ-ㅎㅏ-ㅣ가-힣一-龥]/g, "_");
+      const weight =
+        parseFloat(card.querySelector(".weight").textContent.replace(/[^\d.]/g, "")) || 0;
+      updates[`history.${safeName}.${today}`] = weight;
+      total += weight;
     }
-    // 📈 更新折線圖（即時顯示新資料）
-    for (const { safeName, chart } of charts) {
-      const w = updates[`history.${safeName}.${today}`];
-      if (w !== undefined) {
-        const labels = chart.data.labels;
-        const data = chart.data.datasets[0].data;
-        if (!labels.includes(today)) {
-          labels.push(today);
-          data.push(w);
-        } else {
-          // 若已存在今天的日期，更新最後一個點
-          data[data.length - 1] = w;
-        }
-        chart.update();
+
+    try {
+      // 📝 寫入 Firestore
+      const userRef = doc(db, "profiles", localStorage.getItem("userName"));
+      for (const [k, v] of Object.entries(updates)) {
+        await updateDoc(userRef, { [k]: v });
       }
-    }
-    // ✅ 同步更新 lastTraining (顯示上次訓練用)
-    await setDoc(
-       doc(db, "profiles", localStorage.getItem("userName")),
-      {
-        lastTraining: {
-          goal: localStorage.getItem("lastGoal"),
-          bodyPart: localStorage.getItem("lastPart"),
-          date: today,
+
+      // 📈 更新折線圖
+      for (const { safeName, chart } of charts) {
+        const w = updates[`history.${safeName}.${today}`];
+        if (w !== undefined) {
+          const labels = chart.data.labels;
+          const data = chart.data.datasets[0].data;
+          if (!labels.includes(today)) {
+            labels.push(today);
+            data.push(w);
+          } else {
+            data[data.length - 1] = w;
+          }
+          chart.update();
+        }
+      }
+
+      // ✅ 更新 lastTraining
+      await setDoc(
+        userRef,
+        {
+          lastTraining: {
+            goal: localStorage.getItem("lastGoal"),
+            bodyPart: localStorage.getItem("lastPart"),
+            date: today,
+          },
         },
-      },
-      { merge: true }
-    );
+        { merge: true }
+      );
 
-    // 🎉 完成提示
-    alert(`✅ 今日訓練完成！總重量：${total.toFixed(1)} kg 已儲存。`);
+      alert(`✅ 今日訓練完成！總重量：${total.toFixed(1)} kg 已儲存。`);
+      location.reload();
 
-  } catch (e) {
-    console.error("❌ 訓練儲存失敗：", e);
-    alert("❌ 訓練儲存失敗，請稍後再試。");
-  }
-});
+    } catch (e) {
+      console.error("❌ 訓練儲存失敗：", e);
+      alert("❌ 訓練儲存失敗，請稍後再試。");
+    }
+  });
+} // ✅ 關閉 displayExercises()
+
 
 // === 🚀 頁面啟動 ===
 window.addEventListener("DOMContentLoaded", async () => {
   const userName = await initUser();
   await showLastTraining();
-  document.getElementById("loadBtn")?.addEventListener("click", () => loadMenu(db, userName));
+  document.getElementById("loadBtn")?.addEventListener("click", () =>
+    loadMenu(db, userName)
+  );
 });
