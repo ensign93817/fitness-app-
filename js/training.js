@@ -29,6 +29,15 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+// === ✅ 檢查使用者是否已在 profile.html 建立資料 ===
+const activeUser = localStorage.getItem("activeUser");
+if (!activeUser) {
+  alert("請先建立個人資料，再進行訓練推薦。");
+  window.location.href = "profile.html";
+} else {
+  console.log("目前登入使用者：", activeUser);
+}
+
 // === 👤 初始化使用者 ===
 async function initUser() {
   let userName = localStorage.getItem("userName");
@@ -59,16 +68,24 @@ async function initUser() {
 }
 
 // === 💪 顯示上次訓練目標與部位 ===
-function showLastTraining() {
-  const lastGoal = localStorage.getItem("lastGoal");
-  const lastPart = localStorage.getItem("lastPart");
-  if (lastGoal && lastPart) {
-    const infoDiv = document.createElement("div");
-    infoDiv.className = "alert alert-info mt-2";
-    infoDiv.innerHTML = `📌 上次訓練：<b>${lastGoal}</b> - <b>${lastPart}</b>`;
-    document.querySelector("h2")?.insertAdjacentElement("beforebegin", infoDiv);
+async function showLastTraining() {
+  const activeUser = localStorage.getItem("activeUser");
+  if (!activeUser) return;
+
+  try {
+    const userSnap = await getDoc(doc(db, "profiles", activeUser));
+    const data = userSnap.data();
+    if (data?.lastTraining) {
+      const infoDiv = document.createElement("div");
+      infoDiv.className = "alert alert-info mt-2";
+      infoDiv.innerHTML = `📌 上次訓練：<b>${data.lastTraining.goal}</b> - <b>${data.lastTraining.bodyPart}</b>`;
+      document.querySelector("h2")?.insertAdjacentElement("beforebegin", infoDiv);
+    }
+  } catch (e) {
+    console.warn("無法讀取上次訓練紀錄：", e);
   }
 }
+
 
 // === 📦 載入菜單 ===
 async function loadMenu(db, userName) {
@@ -266,6 +283,23 @@ async function displayExercises(db, userName, exercises) {
         chart.update();
       }
     }
+// === 📝 更新使用者的上次訓練紀錄 ===
+try {
+  await setDoc(
+    doc(db, "profiles", activeUser),
+    {
+      lastTraining: {
+        goal: localStorage.getItem("lastGoal"),
+        bodyPart: localStorage.getItem("lastPart"),
+        date: new Date().toISOString(),
+      },
+    },
+    { merge: true }
+  );
+  console.log("✅ 已更新上次訓練紀錄");
+} catch (e) {
+  console.warn("❌ 更新 lastTraining 失敗", e);
+}
 
     alert(`✅ 今日訓練完成！總重量：${total.toFixed(1)} kg 已儲存。`);
   });
