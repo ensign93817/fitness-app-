@@ -30,7 +30,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 // === ✅ 檢查使用者是否已在 profile.html 建立資料 ===
-const activeUser = localStorage.getItem("activeUser");
+const activeUser = localStorage.getItem("userName");
 if (!activeUser) {
   alert("請先建立個人資料，再進行訓練推薦。");
   window.location.href = "profile.html";
@@ -293,7 +293,14 @@ if (document.getElementById("completeTrainingBtn")) return;
           chart.update();
         }
       }
+try {
+  const userRef = doc(db, "profiles", localStorage.getItem("userName"));
+  // 確保文件存在
+  await setDoc(userRef, { createdAt: new Date().toISOString() }, { merge: true });
 
+  for (const [k, v] of Object.entries(updates)) {
+    await updateDoc(userRef, { [k]: v });
+  }
       // ✅ 更新 lastTraining
       await setDoc(
         userRef,
