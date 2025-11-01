@@ -17,20 +17,17 @@ import {
 
 // === ⚙️ Firebase 初始化設定 ===
 const firebaseConfig = {
-
+  apiKey: "AIzaSyBur0DoRPT0csPqtyDSOQBYMjlGaqf3EB0",
+  authDomain: "fitness-guide-9a8f3.firebaseapp.com",
+  projectId: "fitness-guide-9a8f3",
+  storageBucket: "fitness-guide-9a8f3.appspot.com", // ✅ 改正錯字 firebasestorage.app → appspot.com
+  messagingSenderId: "969288112649",
+  appId: "1:969288112649:web:58b5b807c410388b1836d8",
+  measurementId: "G-7X1L324K0Q"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-
-// === ✅ 檢查使用者是否已在 profile.html 建立資料 ===
-const activeUser = localStorage.getItem("userName");
-if (!activeUser) {
-  alert("請先建立個人資料，再進行訓練推薦。");
-  window.location.href = "profile.html";
-} else {
-  console.log("目前登入使用者：", activeUser);
-}
 
 // === 👤 初始化使用者 ===
 async function initUser() {
@@ -61,14 +58,13 @@ async function initUser() {
   return userName;
 }
 
-// === 💪 顯示上次訓練目標與部位 ===
-// === 💪 顯示上次訓練目標與部位 ===
+// === 💪 顯示上次訓練 ===
 async function showLastTraining() {
-  const userName = localStorage.getItem("userName"); // ✅ 統一名稱
+  const userName = localStorage.getItem("userName");
   if (!userName) return;
 
   try {
-    const userSnap = await getDoc(doc(db, "profiles", userName)); // ✅ 用 userName 抓資料
+    const userSnap = await getDoc(doc(db, "profiles", userName));
     const data = userSnap.data();
     if (data?.lastTraining) {
       const infoDiv = document.createElement("div");
@@ -96,12 +92,10 @@ async function loadMenu(db, userName) {
   localStorage.setItem("lastGoal", goal);
   localStorage.setItem("lastPart", part);
 
-  // 🔄 載入中提示
   loadBtn.disabled = true;
   loadBtn.textContent = "⏳ 載入中...";
   container.innerHTML = "<p>📂 正在讀取訓練菜單...</p>";
 
-  // ✅ 先檢查快取
   const cacheKey = `${goal}_${part}`;
   const cached = sessionStorage.getItem(cacheKey);
   if (cached) {
@@ -112,7 +106,6 @@ async function loadMenu(db, userName) {
     return;
   }
 
-  // 🔥 從 Firestore 抓資料
   try {
     const docRef = doc(db, "menus", `${goal}_${part}`);
     const docSnap = await getDoc(docRef);
@@ -144,7 +137,6 @@ async function displayExercises(db, userName, exercises) {
   container.innerHTML = "";
   window.charts = [];
 
-  // 🔹 去重
   const names = new Set();
   const uniqueExercises = exercises.filter((ex) => {
     if (!ex.name || names.has(ex.name)) return false;
@@ -163,7 +155,6 @@ async function displayExercises(db, userName, exercises) {
     const dates = Object.keys(history).sort();
     const weights = dates.map((d) => history[d]);
     const lastWeight = weights.at(-1) || ex.defaultWeight || ex.weight || 10;
-
 
     const card = document.createElement("div");
     card.className = "card p-3 mb-3 shadow-sm";
@@ -200,7 +191,6 @@ async function displayExercises(db, userName, exercises) {
     });
     charts.push({ safeName, chart });
 
-    // === 🔧 重量調整按鈕 ===
     const addBtn = card.querySelector(".add-btn");
     const keepBtn = card.querySelector(".keep-btn");
     const reduceBtn = card.querySelector(".reduce-btn");
@@ -213,11 +203,7 @@ async function displayExercises(db, userName, exercises) {
       try {
         await updateDoc(userRef, { [`history.${safeName}.${today}`]: newWeight });
       } catch {
-        await setDoc(
-          userRef,
-          { history: { [safeName]: { [today]: newWeight } } },
-          { merge: true }
-        );
+        await setDoc(userRef, { history: { [safeName]: { [today]: newWeight } } }, { merge: true });
       }
     }
 
@@ -238,8 +224,8 @@ async function displayExercises(db, userName, exercises) {
       await saveWeightChange(currentWeight);
     });
   }
-// 🧩 避免重複建立「完成訓練」按鈕
-if (document.getElementById("completeTrainingBtn")) return;
+
+  if (document.getElementById("completeTrainingBtn")) return;
 
   // === ✅ 完成訓練按鈕 ===
   const completeBtn = document.createElement("button");
@@ -249,77 +235,53 @@ if (document.getElementById("completeTrainingBtn")) return;
   completeBtn.style = "display:block;margin:30px auto;padding:10px 20px;font-size:18px;";
   container.insertAdjacentElement("afterend", completeBtn);
 
-// === ✅ 完成訓練按鈕事件 ===
-completeBtn.addEventListener("click", async () => {
-  const today = localISODate();
-  const cards = document.querySelectorAll(".card");
-  let total = 0;
-  const updates = {};
+  // === ✅ 完成訓練事件 ===
+  completeBtn.addEventListener("click", async () => {
+    const today = localISODate();
+    const cards = document.querySelectorAll(".card");
+    let total = 0;
+    const updates = {};
 
-  // 收集各動作重量
-  for (const card of cards) {
-    const name = card.querySelector("h4").textContent;
-    const safeName = name.replace(/[^\wㄱ-ㅎㅏ-ㅣ가-힣一-龥]/g, "_");
-    const weight =
-      parseFloat(card.querySelector(".weight").textContent.replace(/[^\d.]/g, "")) || 0;
-    updates[`history.${safeName}.${today}`] = weight;
-    total += weight;
-  }
-
-  try {
-    // === 🧾 確保文件存在 ===
-    const userRef = doc(db, "profiles", localStorage.getItem("userName"));
-    await setDoc(userRef, { createdAt: new Date().toISOString() }, { merge: true });
-
-    // === 🏋️‍♂️ 寫入訓練歷史紀錄 ===
-    for (const [k, v] of Object.entries(updates)) {
-      await updateDoc(userRef, { [k]: v });
+    for (const card of cards) {
+      const name = card.querySelector("h4").textContent;
+      const safeName = name.replace(/[^\wㄱ-ㅎㅏ-ㅣ가-힣一-龥]/g, "_");
+      const weight = parseFloat(card.querySelector(".weight").textContent.replace(/[^\d.]/g, "")) || 0;
+      updates[`history.${safeName}.${today}`] = weight;
+      total += weight;
     }
 
-    // === 📊 更新前端折線圖 ===
-    for (const { safeName, chart } of charts) {
-      const w = updates[`history.${safeName}.${today}`];
-      if (w !== undefined) {
-        const labels = chart.data.labels;
-        const data = chart.data.datasets[0].data;
-        if (!labels.includes(today)) {
-          labels.push(today);
-          data.push(w);
-        } else {
-          data[data.length - 1] = w;
-        }
-        chart.update();
+    try {
+      const userRef = doc(db, "profiles", localStorage.getItem("userName"));
+      await setDoc(userRef, { createdAt: new Date().toISOString() }, { merge: true });
+
+      for (const [k, v] of Object.entries(updates)) {
+        await updateDoc(userRef, { [k]: v });
       }
-    }
 
-    // === 💾 更新 lastTraining ===
-    await setDoc(
-      userRef,
-      {
-        lastTraining: {
-          goal: localStorage.getItem("lastGoal"),
-          bodyPart: localStorage.getItem("lastPart"),
-          date: today,
+      await setDoc(
+        userRef,
+        {
+          lastTraining: {
+            goal: localStorage.getItem("lastGoal"),
+            bodyPart: localStorage.getItem("lastPart"),
+            date: today,
+          },
         },
-      },
-      { merge: true }
-    );
+        { merge: true }
+      );
 
-    // === 🎉 提示成功 ===
-    alert(`✅ 今日訓練完成！總重量：${total.toFixed(1)} kg 已儲存。`);
-    location.reload();
-
-  } catch (e) {
-    console.error("❌ 訓練儲存失敗：", e);
-    alert("❌ 訓練儲存失敗，請稍後再試。");
-  }
-});
+      alert(`✅ 今日訓練完成！總重量：${total.toFixed(1)} kg 已儲存。`);
+      location.reload();
+    } catch (e) {
+      console.error("❌ 訓練儲存失敗：", e);
+      alert("❌ 訓練儲存失敗，請稍後再試。");
+    }
+  });
 }
+
 // === 🚀 頁面啟動 ===
 window.addEventListener("DOMContentLoaded", async () => {
   const userName = await initUser();
   await showLastTraining();
-  document.getElementById("loadBtn")?.addEventListener("click", () =>
-    loadMenu(db, userName)
-  );
+  document.getElementById("loadBtn")?.addEventListener("click", () => loadMenu(db, userName));
 });
