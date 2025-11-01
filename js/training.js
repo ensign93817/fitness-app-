@@ -17,13 +17,7 @@ import {
 
 // === ⚙️ Firebase 初始化設定 ===
 const firebaseConfig = {
-  apiKey: "AIzaSyBur0DoRPT0csPqtyDSOQBYMjlGaqf3EB0",
-  authDomain: "fitness-guide-9a8f3.firebaseapp.com",
-  projectId: "fitness-guide-9a8f3",
-  storageBucket: "fitness-guide-9a8f3.firebasestorage.app",
-  messagingSenderId: "969288112649",
-  appId: "1:969288112649:web:58b5b807c410388b1836d8",
-  measurementId: "G-7X1L324K0Q"
+
 };
 
 const app = initializeApp(firebaseConfig);
@@ -262,6 +256,7 @@ completeBtn.addEventListener("click", async () => {
   let total = 0;
   const updates = {};
 
+  // 收集各動作重量
   for (const card of cards) {
     const name = card.querySelector("h4").textContent;
     const safeName = name.replace(/[^\wㄱ-ㅎㅏ-ㅣ가-힣一-龥]/g, "_");
@@ -272,16 +267,16 @@ completeBtn.addEventListener("click", async () => {
   }
 
   try {
-    // ✅ 確保文件存在
+    // === 🧾 確保文件存在 ===
     const userRef = doc(db, "profiles", localStorage.getItem("userName"));
     await setDoc(userRef, { createdAt: new Date().toISOString() }, { merge: true });
 
-    // 📝 寫入每個動作紀錄
+    // === 🏋️‍♂️ 寫入訓練歷史紀錄 ===
     for (const [k, v] of Object.entries(updates)) {
       await updateDoc(userRef, { [k]: v });
     }
 
-    // 📈 更新折線圖（即時顯示新資料）
+    // === 📊 更新前端折線圖 ===
     for (const { safeName, chart } of charts) {
       const w = updates[`history.${safeName}.${today}`];
       if (w !== undefined) {
@@ -297,7 +292,7 @@ completeBtn.addEventListener("click", async () => {
       }
     }
 
-    // ✅ 更新 lastTraining
+    // === 💾 更新 lastTraining ===
     await setDoc(
       userRef,
       {
@@ -310,6 +305,7 @@ completeBtn.addEventListener("click", async () => {
       { merge: true }
     );
 
+    // === 🎉 提示成功 ===
     alert(`✅ 今日訓練完成！總重量：${total.toFixed(1)} kg 已儲存。`);
     location.reload();
 
