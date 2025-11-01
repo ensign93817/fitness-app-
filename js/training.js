@@ -315,27 +315,6 @@ completeBtn.addEventListener("click", async () => {
     alert("❌ 訓練儲存失敗，請稍後再試。");
   }
 });
-
-// === 📝 更新使用者的上次訓練紀錄 ===
-try {
-  await setDoc(
-    doc(db, "profiles", activeUser),
-    {
-      lastTraining: {
-        goal: localStorage.getItem("lastGoal"),
-        bodyPart: localStorage.getItem("lastPart"),
-        date: new Date().toISOString(),
-      },
-    },
-    { merge: true }
-  );
-  console.log("✅ 已更新上次訓練紀錄");
-} catch (e) {
-  console.warn("❌ 更新 lastTraining 失敗", e);
-}
-
-    alert(`✅ 今日訓練完成！總重量：${total.toFixed(1)} kg 已儲存。`);
-  });
 }
 
 // === 🚀 頁面啟動 ===
