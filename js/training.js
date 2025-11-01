@@ -270,8 +270,13 @@ async function displayExercises(db, userName, exercises) {
         { merge: true }
       );
 
-      alert(`✅ 今日訓練完成！總重量：${total.toFixed(1)} kg 已儲存。`);
-      location.reload();
+    // 🎉 顯示成功訊息（不 reload，直接顯示文字）
+    completeBtn.disabled = true;
+    completeBtn.textContent = `✅ 已完成訓練！總重量 ${total.toFixed(1)} kg 已儲存`;
+    completeBtn.style.backgroundColor = "#28a745";
+    completeBtn.style.color = "white";
+    completeBtn.style.fontWeight = "bold";
+      
     } catch (e) {
       console.error("❌ 訓練儲存失敗：", e);
       alert("❌ 訓練儲存失敗，請稍後再試。");
