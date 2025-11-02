@@ -1,49 +1,55 @@
-import { getDb, doc, setDoc, collection } from './firebase.js';
+// === 🔥 Firebase SDK 載入 ===
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+// === ⚙️ Firebase 初始化 ===
+const firebaseConfig = {
+  apiKey: "AIzaSyBur0DoRPT0csPqtyDSOQBYMjlGaqf3EB0",
+  authDomain: "fitness-guide-9a8f3.firebaseapp.com",
+  projectId: "fitness-guide-9a8f3",
+  storageBucket: "fitness-guide-9a8f3.firebasestorage.app",
+  messagingSenderId: "969288112649",
+  appId: "1:969288112649:web:58b5b807c410388b1836d8",
+  measurementId: "G-7X1L324K0Q"
+};
 
-const fileInput = document.getElementById('file');
-const uploadBtn = document.getElementById('uploadBtn');
-const statusEl = document.getElementById('status');
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
+document.getElementById("uploadBtn").addEventListener("click", async () => {
+  const fileInput = document.getElementById("fileInput");
+  if (!fileInput || !fileInput.files.length) {
+    alert("請先選擇 JSON 檔案！");
+    return;
+  }
 
-uploadBtn.addEventListener('click', async ()=>{
-const file = fileInput.files?.[0];
-if(!file){ statusEl.textContent = '請先選擇 JSON 檔'; return; }
-try{
-const text = await file.text();
-const json = JSON.parse(text);
-const db = getDb();
+  const file = fileInput.files[0];
+  const reader = new FileReader();
 
+  reader.onload = async (event) => {
+    try {
+      const menus = JSON.parse(event.target.result);
+      let totalCount = 0;
 
-// 支援 A（單組）或 B（扁平陣列）
-if(Array.isArray(json)){
-// B: flat → group by (goal, bodyPart)
-const groups = new Map();
-for(const row of json){
-const key = `${row.goal}_${row.bodyPart}`;
-if(!groups.has(key)) groups.set(key, { goal: row.goal, bodyPart: row.bodyPart, exercises: [] });
-groups.get(key).exercises.push({
-name: row.name,
-defaultSets: Number(row.defaultSets)||null,
-defaultReps: Number(row.defaultReps)||null,
-restSec: Number(row.restSec)||null
-});
-}
-for(const [key, docData] of groups){
-await setDoc(doc(db,'menus', key), docData, { merge:false });
-}
-}else if(json && json.goal && json.bodyPart && Array.isArray(json.exercises)){
-// A: grouped object
-const key = `${json.goal}_${json.bodyPart}`;
-await setDoc(doc(db,'menus', key), json, { merge:false });
-}else{
-throw new Error('JSON 格式不符合 A 或 B');
-}
+      for (const [goal, parts] of Object.entries(menus)) {
+        for (const [part, exercises] of Object.entries(parts)) {
+          const docId = `${goal}_${part}`;
+          await setDoc(doc(db, "menus", docId), {
+            bodyPart: part,
+            exercises: exercises
+          });
+          console.log(`✅ 已上傳 ${docId}`);
+          totalCount++;
+        }
+      }
 
+      document.getElementById("output").innerHTML =
+        `<p style="color:green;">✅ 全部上傳完成，共 ${totalCount} 份菜單。</p>`;
+    } catch (err) {
+      console.error("❌ 上傳錯誤：", err);
+      alert("上傳失敗，請確認 JSON 檔案格式！");
+    }
+  };
 
-statusEl.textContent = '上傳完成 ✅';
-}catch(err){
-console.error(err);
-statusEl.textContent = '上傳失敗：' + err.message;
-}
+  reader.readAsText(file);
 });
