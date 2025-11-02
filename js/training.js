@@ -311,9 +311,10 @@ async function showLastTraining() {
     console.warn("❌ 無法讀取上次訓練紀錄：", e);
   }
 }
-});
+
 // === 🚀 頁面啟動 ===
 window.addEventListener("DOMContentLoaded", async () => {
   const userName = await initUser();
   await showLastTraining();
   document.getElementById("loadBtn")?.addEventListener("click", () => loadMenu(db, userName));
+});
