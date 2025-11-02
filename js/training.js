@@ -76,7 +76,7 @@ async function showLastTraining() {
       infoDiv.innerHTML =
         `📌 上次訓練：<b>${data.lastTraining.goal}</b> - <b>${data.lastTraining.bodyPart}</b>`;
 
-      // 淡入動畫（關鍵三行）
+      // 淡入動畫
       infoDiv.style.transition = "all 0.5s";
       infoDiv.style.opacity = "0";
       setTimeout(() => (infoDiv.style.opacity = "1"), 50);
@@ -84,6 +84,11 @@ async function showLastTraining() {
       // 插在 h2 前面
       document.querySelector("h2")?.insertAdjacentElement("beforebegin", infoDiv);
     }
+  } catch (e) {
+    console.error("❌ 無法顯示上次訓練紀錄：", e);
+  }
+} // ✅ 這一行是你缺的關閉括號
+
 
 // === 📦 載入菜單 ===
 async function loadMenu(db, userName) {
@@ -291,7 +296,6 @@ completeBtn.addEventListener("click", async () => {
   
  } catch (e) {
   console.warn("❌ 無法讀取上次訓練紀錄：", e);
-  alert("❌ 訓練儲存失敗，請稍後再試。");
 }
 }); // ✅ 關閉 completeBtn.addEventListener
 
