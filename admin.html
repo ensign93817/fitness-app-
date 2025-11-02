@@ -1,14 +1,17 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8">
-  <title>管理後台 - 上傳菜單</title>
+  <meta charset="UTF-8" />
+  <title>健身菜單上傳系統</title>
   <script type="module" src="./js/uploadMenus.js"></script>
 </head>
 <body>
   <h2>健身菜單上傳系統</h2>
-  <input type="file" id="fileInput" accept=".json" multiple />
+
+  <!-- ✅ 必須是 id="fileInput" -->
+  <input type="file" id="fileInput" accept=".json" />
   <button id="uploadBtn">上傳至 Firestore</button>
+
   <div id="output"></div>
 </body>
 </html>
