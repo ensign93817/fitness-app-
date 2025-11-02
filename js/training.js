@@ -281,10 +281,37 @@ completeBtn.addEventListener("click", async () => {
     // 🧩 立即顯示「上次訓練」資訊（不用重載）
     await showLastTraining();
 
+// === 💪 顯示上次訓練 ===
+async function showLastTraining() {
+  const userName = localStorage.getItem("userName");
+  if (!userName) return;
+
+  try {
+    const userSnap = await getDoc(doc(db, "profiles", userName));
+    const data = userSnap.data();
+
+    // 先清掉舊的提示，避免重複
+    document.querySelectorAll(".last-training-info").forEach(el => el.remove());
+
+    if (data?.lastTraining) {
+      const infoDiv = document.createElement("div");
+      infoDiv.className = "alert alert-info mt-2 last-training-info";
+      infoDiv.innerHTML =
+        `📌 上次訓練：<b>${data.lastTraining.goal}</b> - <b>${data.lastTraining.bodyPart}</b>`;
+
+      // 淡入動畫（關鍵三行）
+      infoDiv.style.transition = "all 0.5s";
+      infoDiv.style.opacity = "0";
+      setTimeout(() => (infoDiv.style.opacity = "1"), 50);
+
+      // 插在 h2 前面
+      document.querySelector("h2")?.insertAdjacentElement("beforebegin", infoDiv);
+    }
   } catch (e) {
-    console.error("❌ 訓練儲存失敗：", e);
-    alert("❌ 訓練儲存失敗，請稍後再試。");
+    console.warn("❌ 無法讀取上次訓練紀錄：", e);
   }
+}
+
 });
 }
 // === 🚀 頁面啟動 ===
