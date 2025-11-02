@@ -312,8 +312,6 @@ async function showLastTraining() {
   }
 }
 
-});
-}
 // === 🚀 頁面啟動 ===
 window.addEventListener("DOMContentLoaded", async () => {
   const userName = await initUser();
