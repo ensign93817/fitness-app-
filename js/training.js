@@ -288,7 +288,7 @@ completeBtn.addEventListener("click", async () => {
 
     // 🧩 立即顯示「上次訓練」資訊（不用重載）
     await showLastTraining();
-  }
+  
   } catch (e) {
     console.warn("❌ 無法讀取上次訓練紀錄：", e);
     alert("❌ 訓練儲存失敗，請稍後再試。");
