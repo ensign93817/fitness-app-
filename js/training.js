@@ -301,3 +301,4 @@ window.addEventListener("DOMContentLoaded", async () => {
   await showLastTraining();
   document.getElementById("loadBtn")?.addEventListener("click", () => loadMenu(db, userName));
 });
+}
