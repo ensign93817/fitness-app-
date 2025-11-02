@@ -292,6 +292,7 @@ completeBtn.addEventListener("click", async () => {
   } catch (e) {
     console.warn("❌ 無法讀取上次訓練紀錄：", e);
   }
+  });
 }
 
 // === 🚀 頁面啟動 ===
