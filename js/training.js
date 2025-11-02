@@ -48,6 +48,21 @@ async function initUser() {
 
   console.log("登入使用者：", userName);
 
+  // 🔥 新增 Firestore 驗證邏輯
+  try {
+    const userRef = doc(db, "profiles", userName);
+    const userSnap = await getDoc(userRef);
+
+    if (!userSnap.exists()) {
+      alert(`⚠️ 尚未建立基本資料！請先前往「建立個人資料」頁面。`);
+      window.location.href = "./profile.html"; // 自動導向
+      return;
+    }
+  } catch (err) {
+    console.error("❌ 無法檢查使用者資料：", err);
+  }
+
+  // 顯示登入中使用者
   const h2 = document.querySelector("h2");
   if (h2) {
     h2.insertAdjacentHTML(
@@ -55,6 +70,7 @@ async function initUser() {
       `<div style="margin:10px 0;">👤 當前使用者：<b>${userName}</b></div>`
     );
   }
+
   return userName;
 }
 
@@ -148,6 +164,8 @@ async function loadMenu(db, userName) {
 async function displayExercises(db, userName, exercises) {
   const container = document.getElementById("exerciseContainer");
   container.innerHTML = "";
+  // 🔥 移除舊的完成訓練按鈕（避免重複出現）
+  document.getElementById("completeTrainingBtn")?.remove();
   window.charts = [];
 
   const names = new Set();
