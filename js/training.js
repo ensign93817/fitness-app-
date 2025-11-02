@@ -286,7 +286,7 @@ completeBtn.addEventListener("click", async () => {
     alert("❌ 訓練儲存失敗，請稍後再試。");
   }
 });
-
+}
 // === 🚀 頁面啟動 ===
 window.addEventListener("DOMContentLoaded", async () => {
   const userName = await initUser();
