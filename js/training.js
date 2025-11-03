@@ -164,8 +164,7 @@ async function loadMenu(db, userName) {
 async function displayExercises(db, userName, exercises) {
   const container = document.getElementById("exerciseContainer");
   container.innerHTML = "";
-  // 🔥 移除舊的完成訓練按鈕（避免重複出現）
-  document.getElementById("completeTrainingBtn")?.remove();
+  document.getElementById("completeTrainingBtn")?.remove(); // 移除舊按鈕
   window.charts = [];
 
   const names = new Set();
@@ -187,6 +186,7 @@ async function displayExercises(db, userName, exercises) {
     const weights = dates.map((d) => history[d]);
     const lastWeight = weights.at(-1) || ex.defaultWeight || ex.weight || 10;
 
+    // === 🧱 建立動作卡片 ===
     const card = document.createElement("div");
     card.className = "card p-3 mb-3 shadow-sm";
     card.innerHTML = `
@@ -203,6 +203,7 @@ async function displayExercises(db, userName, exercises) {
     `;
     container.appendChild(card);
 
+    // === 📊 建立圖表 ===
     const ctx = document.getElementById(`chart-${i}`);
     const chart = new Chart(ctx, {
       type: "line",
@@ -218,9 +219,37 @@ async function displayExercises(db, userName, exercises) {
           },
         ],
       },
-      options: { scales: { y: { beginAtZero: true } } },
+      options: {
+        animation: false, // 🔹 關掉動畫避免更新時閃爍
+        scales: { y: { beginAtZero: true } },
+      },
     });
+
+    // === 🕒 每秒更新圖表 (測試用) ===
+    setInterval(async () => {
+      try {
+        const snap = await getDoc(userRef);
+        const data = snap.data();
+        const history = data?.history?.[safeName] || {};
+        const sortedDates = Object.keys(history).sort();
+        const newWeights = sortedDates.map((d) => history[d]);
+
+        // ✅ 若資料有更新才重繪
+        if (JSON.stringify(newWeights) !== JSON.stringify(chart.data.datasets[0].data)) {
+          chart.data.labels = sortedDates;
+          chart.data.datasets[0].data = newWeights;
+          chart.update();
+          console.log(`🔁 更新圖表：${safeName}`, newWeights);
+        }
+      } catch (e) {
+        console.warn("⚠️ 更新圖表失敗：", safeName, e);
+      }
+    }, 1000); // 每秒更新一次
+
     charts.push({ safeName, chart });
+  }
+}
+
 
     const addBtn = card.querySelector(".add-btn");
     const keepBtn = card.querySelector(".keep-btn");
