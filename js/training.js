@@ -186,107 +186,16 @@ async function displayExercises(db, userName, exercises) {
     const weights = dates.map((d) => history[d]);
     const lastWeight = weights.at(-1) || ex.defaultWeight || ex.weight || 10;
 
-    // === 🧱 建立動作卡片 ===
-    const card = document.createElement("div");
-    card.className = "card p-3 mb-3 shadow-sm";
-    card.innerHTML = `
-      <h4>${i + 1}. ${ex.name}</h4>
-      <p>組數：${ex.defaultSets || "未設定"}　次數：${ex.defaultReps || "未設定"}</p>
-      <p>休息：${ex.restSec || "未設定"} 秒</p>
-      <p class="weight">推薦重量：${lastWeight || "尚未有紀錄"} kg</p>
-      <div class="btn-group mb-2">
-        <button class="btn btn-success add-btn">加重</button>
-        <button class="btn btn-primary keep-btn">維持</button>
-        <button class="btn btn-danger reduce-btn">減重</button>
-      </div>
-      <canvas id="chart-${i}" height="120"></canvas>
-    `;
-    container.appendChild(card);
+reduceBtn.addEventListener("click", async () => {
+  currentWeight = Math.max(0, currentWeight - delta);
+  weightText.textContent = `重量：${currentWeight.toFixed(1)} kg`;
+  await saveWeightChange(currentWeight);
+});
+}   // ❌ 這個太早結束
+// === 📊 建立圖表 ===
+const ctx = document.getElementById(`chart-${i}`);
 
-    // === 📊 建立圖表 ===
-    const ctx = document.getElementById(`chart-${i}`);
-    const chart = new Chart(ctx, {
-      type: "line",
-      data: {
-        labels: dates.length ? dates : [localISODate()],
-        datasets: [
-          {
-            label: "重量變化 (kg)",
-            data: weights.length ? weights : [lastWeight],
-            borderColor: "#007bff",
-            backgroundColor: "rgba(0,123,255,0.1)",
-            tension: 0.2,
-          },
-        ],
-      },
-      options: {
-        animation: false, // 🔹 關掉動畫避免更新時閃爍
-        scales: { y: { beginAtZero: true } },
-      },
-    });
-
-    // === 🕒 每秒更新圖表 (測試用) ===
-    setInterval(async () => {
-      try {
-        const snap = await getDoc(userRef);
-        const data = snap.data();
-        const history = data?.history?.[safeName] || {};
-        const sortedDates = Object.keys(history).sort();
-        const newWeights = sortedDates.map((d) => history[d]);
-
-        // ✅ 若資料有更新才重繪
-        if (JSON.stringify(newWeights) !== JSON.stringify(chart.data.datasets[0].data)) {
-          chart.data.labels = sortedDates;
-          chart.data.datasets[0].data = newWeights;
-          chart.update();
-          console.log(`🔁 更新圖表：${safeName}`, newWeights);
-        }
-      } catch (e) {
-        console.warn("⚠️ 更新圖表失敗：", safeName, e);
-      }
-    }, 1000); // 每秒更新一次
-
-    charts.push({ safeName, chart });
-  }
-}
-    // === 🎯 三個按鈕邏輯 ===
-    const addBtn = card.querySelector(".add-btn");
-    const keepBtn = card.querySelector(".keep-btn");
-    const reduceBtn = card.querySelector(".reduce-btn");
-    const weightText = card.querySelector(".weight");
-    const delta = 2.5;
-    let currentWeight = lastWeight;
-
-    async function saveWeightChange(newWeight) {
-      const today = localISODate();
-      try {
-        await updateDoc(userRef, { [`history.${safeName}.${today}`]: newWeight });
-      } catch {
-        await setDoc(
-          userRef,
-          { history: { [safeName]: { [today]: newWeight } } },
-          { merge: true }
-        );
-      }
-    }
-
-    addBtn.addEventListener("click", async () => {
-      currentWeight += delta;
-      weightText.textContent = `重量：${currentWeight.toFixed(1)} kg`;
-      await saveWeightChange(currentWeight);
-    });
-
-    keepBtn.addEventListener("click", async () => {
-      alert(`💪 維持重量 ${currentWeight.toFixed(1)} kg`);
-      await saveWeightChange(currentWeight);
-    });
-
-    reduceBtn.addEventListener("click", async () => {
-      currentWeight = Math.max(0, currentWeight - delta);
-      weightText.textContent = `重量：${currentWeight.toFixed(1)} kg`;
-      await saveWeightChange(currentWeight);
-    });
-}
+   
   // === ✅ 若按鈕已存在則不重複建立 ===
   if (document.getElementById("completeTrainingBtn")) return;
 
