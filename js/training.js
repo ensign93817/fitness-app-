@@ -1,8 +1,8 @@
-// === 🕓 取得本地時區日期 (YYYY-MM-DD) ===
-function localISODate() {
+// === 🕓 取得本地時間 (YYYY-MM-DD HH:mm:ss) ===
+function localISODateTime() {
   const d = new Date();
   d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
-  return d.toISOString().slice(0, 10);
+  return d.toISOString().slice(0, 19).replace("T", " ");
 }
 
 // === 🔥 Firebase SDK 載入 ===
@@ -208,7 +208,9 @@ async function displayExercises(db, userName, exercises) {
     async function saveWeightChange(newWeight) {
       const today = localISODate();
       try {
-        await updateDoc(userRef, { [`history.${safeName}.${today}`]: newWeight });
+       const now = localISODateTime();
+await updateDoc(userRef, { [`history.${safeName}.${now}`]: newWeight });
+
       } catch {
         await setDoc(
           userRef,
@@ -240,7 +242,8 @@ async function displayExercises(db, userName, exercises) {
     const chart = new Chart(ctx, {
       type: "line",
       data: {
-        labels: dates.length ? dates : [localISODate()],
+        labels: dates.length ? dates : [localISODateTime()],
+
         datasets: [
           {
             label: "重量變化 (kg)",
@@ -301,7 +304,9 @@ async function displayExercises(db, userName, exercises) {
       const name = card.querySelector("h4").textContent;
       const safeName = name.replace(/[^\wㄱ-ㅎㅏ-ㅣ가-힣一-龥]/g, "_");
       const weight = parseFloat(card.querySelector(".weight").textContent.replace(/[^\d.]/g, "")) || 0;
-      updates[`history.${safeName}.${today}`] = weight;
+      const now = localISODateTime();
+      updates[`history.${safeName}.${now}`] = weight;
+
       total += weight;
     }
 
