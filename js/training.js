@@ -283,8 +283,9 @@ async function displayExercises(db, userName, exercises) {
       weightText.textContent = `重量：${currentWeight.toFixed(1)} kg`;
       await saveWeightChange(currentWeight);
     });
-  }
-  }
+  } // ✅ 結束 for 迴圈
+
+  // === ✅ 若按鈕已存在則不重複建立 ===
   if (document.getElementById("completeTrainingBtn")) return;
 
   // === ✅ 完成訓練按鈕 ===
@@ -295,57 +296,55 @@ async function displayExercises(db, userName, exercises) {
   completeBtn.style = "display:block;margin:30px auto;padding:10px 20px;font-size:18px;";
   container.insertAdjacentElement("afterend", completeBtn);
 
-// === ✅ 完成訓練事件 ===
-completeBtn.addEventListener("click", async () => {
-  const today = localISODate();
-  const cards = document.querySelectorAll(".card");
-  let total = 0;
-  const updates = {};
+  // === ✅ 完成訓練事件 ===
+  completeBtn.addEventListener("click", async () => {
+    const today = localISODate();
+    const cards = document.querySelectorAll(".card");
+    let total = 0;
+    const updates = {};
 
-  for (const card of cards) {
-    const name = card.querySelector("h4").textContent;
-    const safeName = name.replace(/[^\wㄱ-ㅎㅏ-ㅣ가-힣一-龥]/g, "_");
-    const weight = parseFloat(card.querySelector(".weight").textContent.replace(/[^\d.]/g, "")) || 0;
-    updates[`history.${safeName}.${today}`] = weight;
-    total += weight;
-  }
-
-  try {
-    const userRef = doc(db, "profiles", localStorage.getItem("userName"));
-    console.log("🚀 開始寫入 Firestore updates：", updates);
-    await setDoc(userRef, { createdAt: new Date().toISOString() }, { merge: true });
-
-    for (const [k, v] of Object.entries(updates)) {
-      await updateDoc(userRef, { [k]: v });
+    for (const card of cards) {
+      const name = card.querySelector("h4").textContent;
+      const safeName = name.replace(/[^\wㄱ-ㅎㅏ-ㅣ가-힣一-龥]/g, "_");
+      const weight = parseFloat(card.querySelector(".weight").textContent.replace(/[^\d.]/g, "")) || 0;
+      updates[`history.${safeName}.${today}`] = weight;
+      total += weight;
     }
 
-    await setDoc(
-      userRef,
-      {
-        lastTraining: {
-          goal: localStorage.getItem("lastGoal"),
-          bodyPart: localStorage.getItem("lastPart"),
-          date: today,
+    try {
+      const userRef = doc(db, "profiles", localStorage.getItem("userName"));
+      console.log("🚀 開始寫入 Firestore updates：", updates);
+      await setDoc(userRef, { createdAt: new Date().toISOString() }, { merge: true });
+
+      for (const [k, v] of Object.entries(updates)) {
+        await updateDoc(userRef, { [k]: v });
+      }
+
+      await setDoc(
+        userRef,
+        {
+          lastTraining: {
+            goal: localStorage.getItem("lastGoal"),
+            bodyPart: localStorage.getItem("lastPart"),
+            date: today,
+          },
         },
-      },
-      { merge: true }
-    );
+        { merge: true }
+      );
 
-    // 🎉 成功提示
-    completeBtn.disabled = true;
-    completeBtn.textContent = `✅ 已完成訓練！總重量 ${total.toFixed(1)} kg 已儲存`;
-    completeBtn.style.backgroundColor = "#28a745";
-    completeBtn.style.color = "white";
-    completeBtn.style.fontWeight = "bold";
+      // 🎉 成功提示
+      completeBtn.disabled = true;
+      completeBtn.textContent = `✅ 已完成訓練！總重量 ${total.toFixed(1)} kg 已儲存`;
+      completeBtn.style.backgroundColor = "#28a745";
+      completeBtn.style.color = "white";
+      completeBtn.style.fontWeight = "bold";
 
-    // 🧩 立即顯示「上次訓練」資訊（不用重載）
-    await showLastTraining();
-  
- } catch (e) {
-  console.warn("❌ 無法讀取上次訓練紀錄：", e);
-}
-}); // ✅ 關閉 completeBtn.addEventListener
-
+      // 🧩 立即顯示「上次訓練」資訊
+      await showLastTraining();
+    } catch (e) {
+      console.warn("❌ 無法讀取上次訓練紀錄：", e);
+    }
+  }); // ✅ 關閉 completeBtn.addEventListener
 } // ✅ 關閉 displayExercises 函式
 
 // === 🚀 頁面啟動 ===
