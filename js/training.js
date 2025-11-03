@@ -286,7 +286,7 @@ async function displayExercises(db, userName, exercises) {
       weightText.textContent = `重量：${currentWeight.toFixed(1)} kg`;
       await saveWeightChange(currentWeight);
     });
-
+}
   // === ✅ 若按鈕已存在則不重複建立 ===
   if (document.getElementById("completeTrainingBtn")) return;
 
