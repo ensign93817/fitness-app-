@@ -48,21 +48,19 @@ async function initUser() {
 
   console.log("登入使用者：", userName);
 
-  // 🔥 新增 Firestore 驗證邏輯
   try {
     const userRef = doc(db, "profiles", userName);
     const userSnap = await getDoc(userRef);
 
     if (!userSnap.exists()) {
       alert(`⚠️ 尚未建立基本資料！請先前往「建立個人資料」頁面。`);
-      window.location.href = "./profile.html"; // 自動導向
+      window.location.href = "./profile.html";
       return;
     }
   } catch (err) {
     console.error("❌ 無法檢查使用者資料：", err);
   }
 
-  // 顯示登入中使用者
   const h2 = document.querySelector("h2");
   if (h2) {
     h2.insertAdjacentHTML(
@@ -83,7 +81,6 @@ async function showLastTraining() {
     const userSnap = await getDoc(doc(db, "profiles", userName));
     const data = userSnap.data();
 
-    // 先清掉舊的提示，避免重複
     document.querySelectorAll(".last-training-info").forEach(el => el.remove());
 
     if (data?.lastTraining) {
@@ -92,19 +89,16 @@ async function showLastTraining() {
       infoDiv.innerHTML =
         `📌 上次訓練：<b>${data.lastTraining.goal}</b> - <b>${data.lastTraining.bodyPart}</b>`;
 
-      // 淡入動畫
       infoDiv.style.transition = "all 0.5s";
       infoDiv.style.opacity = "0";
       setTimeout(() => (infoDiv.style.opacity = "1"), 50);
 
-      // 插在 h2 前面
       document.querySelector("h2")?.insertAdjacentElement("beforebegin", infoDiv);
     }
   } catch (e) {
     console.error("❌ 無法顯示上次訓練紀錄：", e);
   }
-} // ✅ 這一行是你缺的關閉括號
-
+}
 
 // === 📦 載入菜單 ===
 async function loadMenu(db, userName) {
@@ -164,11 +158,11 @@ async function loadMenu(db, userName) {
 async function displayExercises(db, userName, exercises) {
   const container = document.getElementById("exerciseContainer");
   container.innerHTML = "";
-  document.getElementById("completeTrainingBtn")?.remove(); // 移除舊按鈕
+  document.getElementById("completeTrainingBtn")?.remove();
   window.charts = [];
 
   const names = new Set();
-  const uniqueExercises = exercises.filter((ex) => {
+  const uniqueExercises = exercises.filter(ex => {
     if (!ex.name || names.has(ex.name)) return false;
     names.add(ex.name);
     return true;
@@ -183,17 +177,10 @@ async function displayExercises(db, userName, exercises) {
     const safeName = ex.name.replace(/[\/\[\]#$.()\s（）]/g, "_");
     const history = userData.history?.[safeName] || {};
     const dates = Object.keys(history).sort();
-    const weights = dates.map((d) => history[d]);
+    const weights = dates.map(d => history[d]);
     const lastWeight = weights.at(-1) || ex.defaultWeight || ex.weight || 10;
 
-      for (let i = 0; i < uniqueExercises.length; i++) {
-    const ex = uniqueExercises[i];
-    const safeName = ex.name.replace(/[\/\[\]#$.()\s（）]/g, "_");
-    const history = userData.history?.[safeName] || {};
-    const dates = Object.keys(history).sort();
-    const weights = dates.map((d) => history[d]);
-    const lastWeight = weights.at(-1) || ex.defaultWeight || ex.weight || 10;
-
+    // === 🧱 建立動作卡片 ===
     const card = document.createElement("div");
     card.className = "card p-3 mb-3 shadow-sm";
     card.innerHTML = `
@@ -210,7 +197,7 @@ async function displayExercises(db, userName, exercises) {
     `;
     container.appendChild(card);
 
-    // === 按鈕綁定必須在 for 迴圈內 ===
+    // === 🎯 三個按鈕邏輯 ===
     const addBtn = card.querySelector(".add-btn");
     const keepBtn = card.querySelector(".keep-btn");
     const reduceBtn = card.querySelector(".reduce-btn");
@@ -247,19 +234,51 @@ async function displayExercises(db, userName, exercises) {
       weightText.textContent = `重量：${currentWeight.toFixed(1)} kg`;
       await saveWeightChange(currentWeight);
     });
-  } // ✅ 結束 for 迴圈
 
-    
-reduceBtn.addEventListener("click", async () => {
-  currentWeight = Math.max(0, currentWeight - delta);
-  weightText.textContent = `重量：${currentWeight.toFixed(1)} kg`;
-  await saveWeightChange(currentWeight);
-});
-}   // ❌ 這個太早結束
-// === 📊 建立圖表 ===
-const ctx = document.getElementById(`chart-${i}`);
+    // === 📊 建立圖表 ===
+    const ctx = document.getElementById(`chart-${i}`);
+    const chart = new Chart(ctx, {
+      type: "line",
+      data: {
+        labels: dates.length ? dates : [localISODate()],
+        datasets: [
+          {
+            label: "重量變化 (kg)",
+            data: weights.length ? weights : [lastWeight],
+            borderColor: "#007bff",
+            backgroundColor: "rgba(0,123,255,0.1)",
+            tension: 0.2,
+          },
+        ],
+      },
+      options: {
+        animation: false,
+        scales: { y: { beginAtZero: true } },
+      },
+    });
 
-   
+    setInterval(async () => {
+      try {
+        const snap = await getDoc(userRef);
+        const data = snap.data();
+        const history = data?.history?.[safeName] || {};
+        const sortedDates = Object.keys(history).sort();
+        const newWeights = sortedDates.map(d => history[d]);
+
+        if (JSON.stringify(newWeights) !== JSON.stringify(chart.data.datasets[0].data)) {
+          chart.data.labels = sortedDates;
+          chart.data.datasets[0].data = newWeights;
+          chart.update();
+          console.log(`🔁 更新圖表：${safeName}`, newWeights);
+        }
+      } catch (e) {
+        console.warn("⚠️ 更新圖表失敗：", safeName, e);
+      }
+    }, 1000);
+
+    charts.push({ safeName, chart });
+  }
+
   // === ✅ 若按鈕已存在則不重複建立 ===
   if (document.getElementById("completeTrainingBtn")) return;
 
@@ -307,20 +326,18 @@ const ctx = document.getElementById(`chart-${i}`);
         { merge: true }
       );
 
-      // 🎉 成功提示
       completeBtn.disabled = true;
       completeBtn.textContent = `✅ 已完成訓練！總重量 ${total.toFixed(1)} kg 已儲存`;
       completeBtn.style.backgroundColor = "#28a745";
       completeBtn.style.color = "white";
       completeBtn.style.fontWeight = "bold";
 
-      // 🧩 立即顯示「上次訓練」資訊
       await showLastTraining();
     } catch (e) {
       console.warn("❌ 無法讀取上次訓練紀錄：", e);
     }
-  }); // ✅ 關閉 completeBtn.addEventListener
-} // ✅ 關閉 displayExercises 函式
+  });
+}
 
 // === 🚀 頁面啟動 ===
 window.addEventListener("DOMContentLoaded", async () => {
