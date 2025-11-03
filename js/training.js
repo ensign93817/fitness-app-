@@ -284,7 +284,7 @@ async function displayExercises(db, userName, exercises) {
       await saveWeightChange(currentWeight);
     });
   }
-
+  }
   if (document.getElementById("completeTrainingBtn")) return;
 
   // === ✅ 完成訓練按鈕 ===
