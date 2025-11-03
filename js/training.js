@@ -186,6 +186,70 @@ async function displayExercises(db, userName, exercises) {
     const weights = dates.map((d) => history[d]);
     const lastWeight = weights.at(-1) || ex.defaultWeight || ex.weight || 10;
 
+      for (let i = 0; i < uniqueExercises.length; i++) {
+    const ex = uniqueExercises[i];
+    const safeName = ex.name.replace(/[\/\[\]#$.()\s（）]/g, "_");
+    const history = userData.history?.[safeName] || {};
+    const dates = Object.keys(history).sort();
+    const weights = dates.map((d) => history[d]);
+    const lastWeight = weights.at(-1) || ex.defaultWeight || ex.weight || 10;
+
+    const card = document.createElement("div");
+    card.className = "card p-3 mb-3 shadow-sm";
+    card.innerHTML = `
+      <h4>${i + 1}. ${ex.name}</h4>
+      <p>組數：${ex.defaultSets || "未設定"}　次數：${ex.defaultReps || "未設定"}</p>
+      <p>休息：${ex.restSec || "未設定"} 秒</p>
+      <p class="weight">推薦重量：${lastWeight || "尚未有紀錄"} kg</p>
+      <div class="btn-group mb-2">
+        <button class="btn btn-success add-btn">加重</button>
+        <button class="btn btn-primary keep-btn">維持</button>
+        <button class="btn btn-danger reduce-btn">減重</button>
+      </div>
+      <canvas id="chart-${i}" height="120"></canvas>
+    `;
+    container.appendChild(card);
+
+    // === 按鈕綁定必須在 for 迴圈內 ===
+    const addBtn = card.querySelector(".add-btn");
+    const keepBtn = card.querySelector(".keep-btn");
+    const reduceBtn = card.querySelector(".reduce-btn");
+    const weightText = card.querySelector(".weight");
+    const delta = 2.5;
+    let currentWeight = lastWeight;
+
+    async function saveWeightChange(newWeight) {
+      const today = localISODate();
+      try {
+        await updateDoc(userRef, { [`history.${safeName}.${today}`]: newWeight });
+      } catch {
+        await setDoc(
+          userRef,
+          { history: { [safeName]: { [today]: newWeight } } },
+          { merge: true }
+        );
+      }
+    }
+
+    addBtn.addEventListener("click", async () => {
+      currentWeight += delta;
+      weightText.textContent = `重量：${currentWeight.toFixed(1)} kg`;
+      await saveWeightChange(currentWeight);
+    });
+
+    keepBtn.addEventListener("click", async () => {
+      alert(`💪 維持重量 ${currentWeight.toFixed(1)} kg`);
+      await saveWeightChange(currentWeight);
+    });
+
+    reduceBtn.addEventListener("click", async () => {
+      currentWeight = Math.max(0, currentWeight - delta);
+      weightText.textContent = `重量：${currentWeight.toFixed(1)} kg`;
+      await saveWeightChange(currentWeight);
+    });
+  } // ✅ 結束 for 迴圈
+
+    
 reduceBtn.addEventListener("click", async () => {
   currentWeight = Math.max(0, currentWeight - delta);
   weightText.textContent = `重量：${currentWeight.toFixed(1)} kg`;
