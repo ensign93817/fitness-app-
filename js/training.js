@@ -249,8 +249,7 @@ async function displayExercises(db, userName, exercises) {
     charts.push({ safeName, chart });
   }
 }
-
-
+    // === 🎯 三個按鈕邏輯 ===
     const addBtn = card.querySelector(".add-btn");
     const keepBtn = card.querySelector(".keep-btn");
     const reduceBtn = card.querySelector(".reduce-btn");
@@ -263,7 +262,11 @@ async function displayExercises(db, userName, exercises) {
       try {
         await updateDoc(userRef, { [`history.${safeName}.${today}`]: newWeight });
       } catch {
-        await setDoc(userRef, { history: { [safeName]: { [today]: newWeight } } }, { merge: true });
+        await setDoc(
+          userRef,
+          { history: { [safeName]: { [today]: newWeight } } },
+          { merge: true }
+        );
       }
     }
 
@@ -284,6 +287,7 @@ async function displayExercises(db, userName, exercises) {
       await saveWeightChange(currentWeight);
     });
   } // ✅ 結束 for 迴圈
+
 
   // === ✅ 若按鈕已存在則不重複建立 ===
   if (document.getElementById("completeTrainingBtn")) return;
