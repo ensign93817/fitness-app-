@@ -211,16 +211,15 @@ async function displayExercises(db, userName, exercises) {
     const delta = 2.5;
     let currentWeight = lastWeight;
 
+    // ✅ 統一用「日期+時間」當 key
     async function saveWeightChange(newWeight) {
-      const today = localISODate();
+      const now = localISODateTime();  // 2025-11-03 14:30:01
       try {
-       const now = localISODateTime();
-await updateDoc(userRef, { [`history.${safeName}.${now}`]: newWeight });
-
+        await updateDoc(userRef, { [`history.${safeName}.${now}`]: newWeight });
       } catch {
         await setDoc(
           userRef,
-          { history: { [safeName]: { [today]: newWeight } } },
+          { history: { [safeName]: { [now]: newWeight } } },
           { merge: true }
         );
       }
@@ -229,7 +228,7 @@ await updateDoc(userRef, { [`history.${safeName}.${now}`]: newWeight });
     addBtn.addEventListener("click", async () => {
       currentWeight += delta;
       weightText.textContent = `重量：${currentWeight.toFixed(1)} kg`;
-      await saveWeightChange(currentWeight);
+      await saveWeightChange(currentWeight);   // 仍然保留「調整時就記一次」
     });
 
     keepBtn.addEventListener("click", async () => {
@@ -243,13 +242,17 @@ await updateDoc(userRef, { [`history.${safeName}.${now}`]: newWeight });
       await saveWeightChange(currentWeight);
     });
 
+    // 🔁 ⭐ 每 30 秒自動記錄一次目前重量 ⭐
+    setInterval(() => {
+      saveWeightChange(currentWeight);
+    }, 30_000);
+
     // === 📊 建立圖表 ===
     const ctx = document.getElementById(`chart-${i}`);
     const chart = new Chart(ctx, {
       type: "line",
       data: {
         labels: dates.length ? dates : [localISODateTime()],
-
         datasets: [
           {
             label: "重量變化 (kg)",
@@ -266,19 +269,19 @@ await updateDoc(userRef, { [`history.${safeName}.${now}`]: newWeight });
       },
     });
 
+    // 保持原本每秒從 Firestore 抓資料更新圖
     setInterval(async () => {
       try {
         const snap = await getDoc(userRef);
         const data = snap.data();
-        const history = data?.history?.[safeName] || {};
-        const sortedDates = Object.keys(history).sort();
-        const newWeights = sortedDates.map(d => history[d]);
+        const historyNow = data?.history?.[safeName] || {};
+        const sortedDates = Object.keys(historyNow).sort();
+        const newWeights = sortedDates.map(d => historyNow[d]);
 
         if (JSON.stringify(newWeights) !== JSON.stringify(chart.data.datasets[0].data)) {
           chart.data.labels = sortedDates;
           chart.data.datasets[0].data = newWeights;
           chart.update();
-          console.log(`🔁 更新圖表：${safeName}`, newWeights);
         }
       } catch (e) {
         console.warn("⚠️ 更新圖表失敗：", safeName, e);
@@ -290,6 +293,9 @@ await updateDoc(userRef, { [`history.${safeName}.${now}`]: newWeight });
 
   // === ✅ 若按鈕已存在則不重複建立 ===
   if (document.getElementById("completeTrainingBtn")) return;
+
+  // （下面 completeTrainingBtn 那段可以維持你原本的寫法）
+}
 
   // === ✅ 完成訓練按鈕 ===
   const completeBtn = document.createElement("button");
