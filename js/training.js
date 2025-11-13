@@ -292,10 +292,7 @@ async function displayExercises(db, userName, exercises) {
   }
 
   // === ✅ 若按鈕已存在則不重複建立 ===
-  if (document.getElementById("completeTrainingBtn")) return;
-
-  // （下面 completeTrainingBtn 那段可以維持你原本的寫法）
-}
+  if (document.getElementById("completeTrainingBtn")) return;}
 
   // === ✅ 完成訓練按鈕 ===
   const completeBtn = document.createElement("button");
