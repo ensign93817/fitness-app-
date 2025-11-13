@@ -228,7 +228,7 @@ async function displayExercises(db, userName, exercises) {
     addBtn.addEventListener("click", async () => {
       currentWeight += delta;
       weightText.textContent = `重量：${currentWeight.toFixed(1)} kg`;
-      await saveWeightChange(currentWeight);   // 仍然保留「調整時就記一次」
+      await saveWeightChange(currentWeight);
     });
 
     keepBtn.addEventListener("click", async () => {
@@ -292,7 +292,7 @@ async function displayExercises(db, userName, exercises) {
   }
 
   // === ✅ 若按鈕已存在則不重複建立 ===
-  if (document.getElementById("completeTrainingBtn")) return;}
+  if (document.getElementById("completeTrainingBtn")) return;
 
   // === ✅ 完成訓練按鈕 ===
   const completeBtn = document.createElement("button");
@@ -315,7 +315,6 @@ async function displayExercises(db, userName, exercises) {
       const weight = parseFloat(card.querySelector(".weight").textContent.replace(/[^\d.]/g, "")) || 0;
       const now = localISODateTime();
       updates[`history.${safeName}.${now}`] = weight;
-
       total += weight;
     }
 
@@ -351,7 +350,7 @@ async function displayExercises(db, userName, exercises) {
       console.warn("❌ 無法讀取上次訓練紀錄：", e);
     }
   });
-}
+}  // 👈 這裡才是整個 displayExercises 的唯一結尾大括號
 
 // === 🚀 頁面啟動 ===
 window.addEventListener("DOMContentLoaded", async () => {
