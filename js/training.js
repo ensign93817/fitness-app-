@@ -10,7 +10,17 @@ function localISODate() {
   d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
   return d.toISOString().slice(0, 10);
 }
+// ✅ 新增：把時間「壓」成 30 秒一格
+function localISODateTime30s() {
+  const d = new Date();
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
 
+  // 秒數往下取 30 的倍數（0–29 → 0 秒，30–59 → 30 秒）
+  const sec = d.getSeconds();
+  d.setSeconds(sec - (sec % 30), 0);
+
+  return d.toISOString().slice(0, 19).replace("T", " ");
+}
 // === 🔥 Firebase SDK 載入 ===
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import {
@@ -211,19 +221,20 @@ async function displayExercises(db, userName, exercises) {
     const delta = 2.5;
     let currentWeight = lastWeight;
 
-    // ✅ 統一用「日期+時間」當 key
-    async function saveWeightChange(newWeight) {
-      const now = localISODateTime();  // 2025-11-03 14:30:01
-      try {
-        await updateDoc(userRef, { [`history.${safeName}.${now}`]: newWeight });
-      } catch {
-        await setDoc(
-          userRef,
-          { history: { [safeName]: { [now]: newWeight } } },
-          { merge: true }
-        );
-      }
-    }
+
+// ✅ 用「30 秒一格」的時間當 key
+async function saveWeightChange(newWeight) {
+  const slot = localISODateTime30s();  // e.g. 2025-11-14 23:31:30
+  try {
+    await updateDoc(userRef, { [`history.${safeName}.${slot}`]: newWeight });
+  } catch {
+    await setDoc(
+      userRef,
+      { history: { [safeName]: { [slot]: newWeight } } },
+      { merge: true }
+    );
+  }
+}
 
     addBtn.addEventListener("click", async () => {
       currentWeight += delta;
@@ -313,8 +324,9 @@ async function displayExercises(db, userName, exercises) {
       const name = card.querySelector("h4").textContent;
       const safeName = name.replace(/[^\wㄱ-ㅎㅏ-ㅣ가-힣一-龥]/g, "_");
       const weight = parseFloat(card.querySelector(".weight").textContent.replace(/[^\d.]/g, "")) || 0;
-      const now = localISODateTime();
-      updates[`history.${safeName}.${now}`] = weight;
+      const slot = localISODateTime30s();
+      updates[`history.${safeName}.${slot}`] = weight;
+
       total += weight;
     }
 
