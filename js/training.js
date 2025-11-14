@@ -253,11 +253,6 @@ async function saveWeightChange(newWeight) {
       await saveWeightChange(currentWeight);
     });
 
-    // 🔁 ⭐ 每 30 秒自動記錄一次目前重量 ⭐
-    setInterval(() => {
-      saveWeightChange(currentWeight);
-    }, 30_000);
-
     // === 📊 建立圖表 ===
     const ctx = document.getElementById(`chart-${i}`);
     const chart = new Chart(ctx, {
