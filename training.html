@@ -59,7 +59,22 @@
 
   <main class="container">
     <h1>訓練推薦</h1>
-
+    
+ <!-- ⭐ 今日推薦區塊（新增） -->
+    <section id="recommendSection" style="margin-bottom: 24px; padding: 16px; border-radius: 8px; background:#f5f5f5;">
+      <h2 style="margin-top:0; font-size:20px;">今日推薦</h2>
+      <p id="recommendText">正在讀取上次訓練紀錄...</p>
+      <div style="margin-top: 12px;">
+        <button id="applyRecommendBtn" style="padding:6px 12px; border-radius:6px; border:none; background:#198754; color:#fff; font-weight:bold; cursor:pointer;">
+          ✅ 套用推薦菜單
+        </button>
+        <button id="skipRecommendBtn" style="padding:6px 12px; border-radius:6px; border:1px solid #ccc; background:#fff; margin-left:8px; cursor:pointer;">
+          我想自己選
+        </button>
+      </div>
+    </section>
+    <!-- ⭐ 今日推薦區塊結束 -->
+    
     <div class="selector">
       <label for="goalSelect">訓練目標：</label>
       <select id="goalSelect">
