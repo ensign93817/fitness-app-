@@ -88,6 +88,18 @@ async function initUser() {
   return userName;
 }
 
+// 🔁 部位循環順序：用來決定「下一次」要練哪個部位
+const BODY_ORDER = ["胸部", "背部", "腿部", "肩部", "二頭肌", "三頭肌", "核心"];
+
+function getNextBodyPart(lastPart) {
+  const idx = BODY_ORDER.indexOf(lastPart);
+  if (idx === -1) {
+    // 找不到（例如第一次用）：從胸部開始
+    return BODY_ORDER[0];
+  }
+  return BODY_ORDER[(idx + 1) % BODY_ORDER.length];
+}
+
 // === 💪 顯示上次訓練 ===
 async function showLastTraining() {
   const userName = localStorage.getItem("userName");
@@ -113,6 +125,62 @@ async function showLastTraining() {
     }
   } catch (e) {
     console.error("❌ 無法顯示上次訓練紀錄：", e);
+  }
+}
+// === ⭐ 顯示「今日推薦」區塊 ===
+async function showRecommendArea(userName) {
+  const section = document.getElementById("recommendSection");
+  const textEl = document.getElementById("recommendText");
+  const applyBtn = document.getElementById("applyRecommendBtn");
+  const skipBtn = document.getElementById("skipRecommendBtn");
+
+  if (!section || !textEl) return;
+
+  try {
+    const snap = await getDoc(doc(db, "profiles", userName));
+    const data = snap.data();
+
+    // 沒有 lastTraining：顯示「尚無紀錄」，只讓使用者自己選
+    if (!data || !data.lastTraining) {
+      textEl.textContent = "目前尚無訓練紀錄，請先自行選擇目標與訓練部位。";
+      applyBtn.style.display = "none";
+      return;
+    }
+
+    const lastGoal = data.lastTraining.goal || "增肌";
+    const lastPart = data.lastTraining.bodyPart || null;
+    const nextPart = getNextBodyPart(lastPart);
+
+    // 顯示說明文字
+    textEl.textContent =
+      `根據你上次的訓練（目標：${lastGoal}、部位：${lastPart ?? "無紀錄"}），` +
+      `本次推薦：目標「${lastGoal}」，訓練部位「${nextPart}」。`;
+
+    // 點「套用推薦」：自動幫你選好下方的 select，並直接載入菜單
+    applyBtn.onclick = () => {
+      const goalSelect = document.getElementById("goalSelect");
+      const partSelect = document.getElementById("partSelect");
+      const loadBtn = document.getElementById("loadBtn");
+
+      if (goalSelect) goalSelect.value = lastGoal;
+      if (partSelect) partSelect.value = nextPart;
+
+      // 也把這次選擇記到 localStorage，讓原本流程不變
+      localStorage.setItem("lastGoal", lastGoal);
+      localStorage.setItem("lastPart", nextPart);
+
+      // 直接載入推薦菜單
+      loadBtn?.click();
+    };
+
+    // 「我想自己選」：只是把推薦區淡出 / 收起（你可以選擇隱藏或不隱藏）
+    skipBtn.onclick = () => {
+      section.style.display = "none";
+    };
+  } catch (e) {
+    console.error("❌ 無法讀取推薦資訊：", e);
+    textEl.textContent = "推薦區載入失敗，請改用下方選單自行選擇。";
+    applyBtn.style.display = "none";
   }
 }
 
@@ -363,5 +431,6 @@ async function saveWeightChange(newWeight) {
 window.addEventListener("DOMContentLoaded", async () => {
   const userName = await initUser();
   await showLastTraining();
+  await showRecommendArea(userName);
   document.getElementById("loadBtn")?.addEventListener("click", () => loadMenu(db, userName));
 });
