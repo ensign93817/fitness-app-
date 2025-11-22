@@ -145,11 +145,34 @@
       </div>
     </section>
 
-    <!-- 🔹 推薦菜單預覽（只列動作資料，不含按鈕與折線圖） -->
-    <section>
-      <h2>推薦訓練菜單</h2>
-      <div id="menuContainer">正在載入菜單...</div>
-    </section>
+  <!-- 🔹 推薦菜單預覽（只列動作資料，不含按鈕與折線圖） -->
+<section>
+  <h2>推薦訓練菜單</h2>
+
+  <!-- 🧾 新手操作說明（放在這裡） -->
+  <div style="
+    max-width: 620px;
+    margin: 0 auto 20px;
+    padding: 10px 16px;
+    border-radius: 8px;
+    background:#f8f9fa;
+    font-size: 14px;
+    line-height: 1.6;
+    color:#555;
+  ">
+    <b>如何使用訓練紀錄：</b><br>
+    ① 依照推薦重量完成本次訓練。<br>
+    ② 每個動作做完今天的組數後，依照感受按一下
+    <span style="color:#198754;">【加重】</span>、
+    <span style="color:#0d6efd;">【維持】</span> 或
+    <span style="color:#dc3545;">【減重】</span>。<br>
+    ③ 系統會記錄你的選擇並更新下一次的推薦重量，最後按下最下方的
+    <b>「✅ 完成訓練」</b> 儲存今天的總重量。
+  </div>
+
+  <div id="menuContainer">正在載入菜單...</div>
+</section>
+
   </main>
 
   <script type="module" src="js/recommend.js"></script>
