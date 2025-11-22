@@ -196,18 +196,24 @@ async function displayExercises(db, userName, exercises) {
 
     const card = document.createElement("div");
     card.className = "card p-3 mb-3 shadow-sm";
-    card.innerHTML = `
-      <h4>${i + 1}. ${ex.name}</h4>
-      <p>組數：${ex.defaultSets || "未設定"}　次數：${ex.defaultReps || "未設定"}</p>
-      <p>休息：${ex.restSec || "未設定"} 秒</p>
-      <p class="weight">推薦重量：${lastWeight || "尚未有紀錄"} kg</p>
-      <div class="btn-group mb-2">
-        <button class="btn btn-success add-btn">加重</button>
-        <button class="btn btn-primary keep-btn">維持</button>
-        <button class="btn btn-danger reduce-btn">減重</button>
-      </div>
-      <canvas id="chart-${i}" height="120"></canvas>
-    `;
+ card.innerHTML = `
+  <h4>${i + 1}. ${ex.name}</h4>
+  <p>組數：${ex.defaultSets || "未設定"}　次數：${ex.defaultReps || "未設定"}</p>
+  <p>休息：${ex.restSec || "未設定"} 秒</p>
+  <p class="weight">推薦重量：${lastWeight || "尚未有紀錄"} kg</p>
+
+  <div class="btn-group mb-2">
+    <button class="btn btn-success add-btn">加重（太輕鬆）</button>
+    <button class="btn btn-primary keep-btn">維持（剛剛好）</button>
+    <button class="btn btn-danger reduce-btn">減重（太吃力）</button>
+  </div>
+  <p style="font-size:12px; color:#777; margin-top:4px;">
+    今天做完這個動作後，依照感受選一個：太輕鬆→加重、剛好→維持、太吃力→減重。
+  </p>
+
+  <canvas id="chart-${i}" height="120"></canvas>
+`;
+
     container.appendChild(card);
 
     const addBtn = card.querySelector(".add-btn");
