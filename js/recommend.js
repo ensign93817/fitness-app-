@@ -1,11 +1,4 @@
-// === 時間工具（其實這支只用到 localISODateTime，留著彈性） ===
-function localISODateTime() {
-  const d = new Date();
-  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
-  return d.toISOString().slice(0, 19).replace("T", " ");
-}
-
-// === Firebase SDK ===
+// === 🔥 Firebase SDK 載入 ===
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import {
   getFirestore,
@@ -13,6 +6,7 @@ import {
   getDoc,
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+// === ⚙️ Firebase 初始化設定 ===
 const firebaseConfig = {
   apiKey: "AIzaSyBur0DoRPT0csPqtyDSOQBYMjlGaqf3EB0",
   authDomain: "fitness-guide-9a8f3.firebaseapp.com",
@@ -20,13 +14,22 @@ const firebaseConfig = {
   storageBucket: "fitness-guide-9a8f3.firebasestorage.app",
   messagingSenderId: "969288112649",
   appId: "1:969288112649:web:58b5b807c410388b1836d8",
-  measurementId: "G-7X1L324K0Q"
+  measurementId: "G-7X1L324K0Q",
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// === 初始化使用者（和 training.js 幾乎一樣） ===
+// 🔁 部位循環順序：用來決定「下一次」要練哪個部位
+const BODY_ORDER = ["胸部", "背部", "腿部", "肩部", "二頭肌", "三頭肌", "核心"];
+
+function getNextBodyPart(lastPart) {
+  const idx = BODY_ORDER.indexOf(lastPart);
+  if (idx === -1) return BODY_ORDER[0];      // 找不到就從胸部開始
+  return BODY_ORDER[(idx + 1) % BODY_ORDER.length];
+}
+
+// 👤 初始化使用者（跟 training.js 的邏輯一樣）
 async function initUser() {
   let userName = localStorage.getItem("userName");
 
@@ -48,9 +51,8 @@ async function initUser() {
   try {
     const userRef = doc(db, "profiles", userName);
     const userSnap = await getDoc(userRef);
-
     if (!userSnap.exists()) {
-      alert(`⚠️ 尚未建立基本資料！請先前往「建立個人資料」頁面。`);
+      alert("⚠️ 尚未建立基本資料！請先前往「建立個人資料」頁面。");
       window.location.href = "./profile.html";
       return null;
     }
@@ -58,115 +60,154 @@ async function initUser() {
     console.error("❌ 無法檢查使用者資料：", err);
   }
 
+  const userNameText = document.getElementById("userNameText");
+  if (userNameText) userNameText.textContent = userName;
+
   return userName;
 }
 
-// 🔁 部位循環順序
-const BODY_ORDER = ["胸部", "背部", "腿部", "肩部", "二頭肌", "三頭肌", "核心"];
-
-function getNextBodyPart(lastPart) {
-  const idx = BODY_ORDER.indexOf(lastPart);
-  if (idx === -1) return BODY_ORDER[0];
-  return BODY_ORDER[(idx + 1) % BODY_ORDER.length];
-}
-
-// === 主流程：載入推薦資訊 + 菜單 ===
+// 🔹 讀取推薦 & 顯示在畫面上
 async function loadRecommendation(userName) {
-  const userNameEl = document.getElementById("userNameDisplay");
-  const lastGoalEl = document.getElementById("lastGoalDisplay");
-  const lastPartEl = document.getElementById("lastPartDisplay");
-  const todayGoalEl = document.getElementById("todayGoalDisplay");
-  const todayPartEl = document.getElementById("todayPartDisplay");
-  const tbody = document.getElementById("recommendTableBody");
-  const startBtn = document.getElementById("startBtn");
-  const customBtn = document.getElementById("customBtn");
+  const lastTrainingText = document.getElementById("lastTrainingText");
+  const todayGoalText = document.getElementById("todayGoalText");
+  const todayPartText = document.getElementById("todayPartText");
+  const manualGoal = document.getElementById("manualGoal");
+  const manualPart = document.getElementById("manualPart");
+  const menuContainer = document.getElementById("menuContainer");
 
-  userNameEl.textContent = userName;
+  let currentGoal = "增肌";
+  let currentPart = "胸部";
 
   try {
-    const userRef = doc(db, "profiles", userName);
-    const userSnap = await getDoc(userRef);
-    const userData = userSnap.exists() ? userSnap.data() : {};
+    const snap = await getDoc(doc(db, "profiles", userName));
+    const data = snap.data();
 
-    if (!userData.lastTraining) {
-      lastGoalEl.textContent = "尚無紀錄";
-      lastPartEl.textContent = "尚無紀錄";
-      todayGoalEl.textContent = "請自選";
-      todayPartEl.textContent = "請自選";
-      tbody.innerHTML = `<tr><td colspan="5">目前尚無訓練紀錄，請先到「訓練紀錄」頁面自行選擇目標與部位進行第一次訓練。</td></tr>`;
+    // 🟢 有 lastTraining：沿用目標＋部位循環
+    if (data && data.lastTraining) {
+      const lastGoal = data.lastTraining.goal || "增肌";
+      const lastPart = data.lastTraining.bodyPart || "胸部";
+      const nextPart = getNextBodyPart(lastPart);
 
-      startBtn.style.display = "none";
-      customBtn.onclick = () => (window.location.href = "training.html");
+      lastTrainingText.textContent = `目標 ${lastGoal}，部位 ${lastPart}`;
+      currentGoal = lastGoal;
+      currentPart = nextPart;
+    } else {
+      // 🔵 第一次使用：固定「增肌 + 胸部」
+      lastTrainingText.textContent =
+        "尚無訓練紀錄，第一次使用，本次預設為：目標 增肌、部位 胸部。";
+      currentGoal = "增肌";
+      currentPart = "胸部";
+    }
+  } catch (e) {
+    console.error("❌ 無法讀取 lastTraining：", e);
+    lastTrainingText.textContent = "讀取失敗，已使用預設推薦（增肌，胸部）。";
+    currentGoal = "增肌";
+    currentPart = "胸部";
+  }
+
+  // 更新畫面上的「今天建議」
+  todayGoalText.textContent = currentGoal;
+  todayPartText.textContent = currentPart;
+
+  // 手動選單預設值
+  manualGoal.value = currentGoal;
+  manualPart.value = currentPart;
+
+  // 顯示推薦菜單
+  await loadMenuPreview(userName, currentGoal, currentPart, menuContainer);
+
+  // 回傳目前選擇給其他事件使用
+  return { currentGoal, currentPart };
+}
+
+// 🔹 只做「菜單預覽」：列出動作 / 組數 / 次數 / 休息 / 上次重量
+async function loadMenuPreview(userName, goal, part, menuContainer) {
+  menuContainer.textContent = "正在載入菜單...";
+
+  try {
+    const menuSnap = await getDoc(doc(db, "menus", `${goal}_${part}`));
+    if (!menuSnap.exists()) {
+      menuContainer.textContent = "⚠️ 查無此訓練菜單。";
       return;
     }
 
-    const lastGoal = userData.lastTraining.goal || "增肌";
-    const lastPart = userData.lastTraining.bodyPart || BODY_ORDER[0];
-    const nextPart = getNextBodyPart(lastPart);
+    const menuData = menuSnap.data();
+    const exercises = Array.isArray(menuData.exercises) ? menuData.exercises : [];
 
-    lastGoalEl.textContent = lastGoal;
-    lastPartEl.textContent = lastPart;
-    todayGoalEl.textContent = lastGoal;
-    todayPartEl.textContent = nextPart;
+    // 讀取使用者歷史重量
+    const profileSnap = await getDoc(doc(db, "profiles", userName));
+    const profileData = profileSnap.data() || {};
+    const historyAll = profileData.history || {};
 
-    // 讀取推薦菜單
-    const menuRef = doc(db, "menus", `${lastGoal}_${nextPart}`);
-    const menuSnap = await getDoc(menuRef);
-
-    if (!menuSnap.exists()) {
-      tbody.innerHTML = `<tr><td colspan="5">查無對應的菜單（${lastGoal}_${nextPart}），請改用「我想自己選」。</td></tr>`;
-    } else {
-      const menuData = menuSnap.data();
-      const exercises = Array.isArray(menuData.exercises) ? menuData.exercises : [];
-      const historyAll = userData.history || {};
-
-      if (!exercises.length) {
-        tbody.innerHTML = `<tr><td colspan="5">此組合尚未建立訓練菜單，請改用「我想自己選」。</td></tr>`;
-      } else {
-        tbody.innerHTML = "";
-        exercises.forEach((ex, idx) => {
-          const safeName = ex.name?.replace(/[\/\[\]#$.()\s（）]/g, "_") || `ex${idx}`;
-          const history = historyAll[safeName] || {};
-          const dates = Object.keys(history).sort();
-          const weights = dates.map(d => history[d]);
-          const lastWeight = weights.at(-1) ?? "尚無紀錄";
-
-          const tr = document.createElement("tr");
-          tr.innerHTML = `
-            <td>${idx + 1}. ${ex.name || "未命名"}</td>
-            <td>${ex.defaultSets ?? "—"}</td>
-            <td>${ex.defaultReps ?? "—"}</td>
-            <td>${ex.restSec ?? "—"}</td>
-            <td>${lastWeight}</td>
-          `;
-          tbody.appendChild(tr);
-        });
-      }
+    if (!exercises.length) {
+      menuContainer.textContent = "目前此菜單尚未設定任何動作。";
+      return;
     }
 
-    // 接受推薦 → 帶參數跳到 training.html
-    startBtn.onclick = () => {
-      const url = new URL("training.html", window.location.origin);
-      url.searchParams.set("goal", lastGoal);
-      url.searchParams.set("part", nextPart);
-      window.location.href = url.toString();
-    };
+    menuContainer.innerHTML = "";
+    exercises.forEach((ex, idx) => {
+      const safeName = (ex.name || "").replace(/[\/\[\]#$.()\s（）]/g, "_");
+      const history = historyAll[safeName] || {};
+      const dates = Object.keys(history).sort();
+      const lastWeight =
+        dates.length > 0 ? history[dates[dates.length - 1]] : (ex.defaultWeight || ex.weight || "尚無紀錄");
 
-    // 自己選 → 直接進 training.html
-    customBtn.onclick = () => {
-      window.location.href = "training.html";
-    };
+      const div = document.createElement("div");
+      div.innerHTML = `
+        <h3>${idx + 1}. ${ex.name || "未命名動作"}</h3>
+        <p>組數：${ex.defaultSets || "未設定"}　次數：${ex.defaultReps || "未設定"}</p>
+        <p>休息：${ex.restSec || "未設定"} 秒</p>
+        <p>上次訓練重量：${lastWeight} kg</p>
+      `;
+      menuContainer.appendChild(div);
+    });
   } catch (e) {
-    console.error("❌ 載入推薦失敗：", e);
-    tbody.innerHTML = `<tr><td colspan="5">推薦資訊載入失敗，請稍後再試或改用「我想自己選」。</td></tr>`;
-    startBtn.style.display = "none";
-    customBtn.onclick = () => (window.location.href = "training.html");
+    console.error("❌ 載入推薦菜單失敗：", e);
+    menuContainer.textContent = "❌ 無法載入推薦菜單，請稍後再試。";
   }
 }
 
-// === 啟動 ===
+// === 🚀 頁面啟動 ===
 window.addEventListener("DOMContentLoaded", async () => {
   const userName = await initUser();
   if (!userName) return;
-  await loadRecommendation(userName);
+
+  const acceptBtn = document.getElementById("acceptBtn");
+  const manualBtn = document.getElementById("manualBtn");
+  const manualArea = document.getElementById("manualArea");
+  const manualGoal = document.getElementById("manualGoal");
+  const manualPart = document.getElementById("manualPart");
+  const applyManualBtn = document.getElementById("applyManualBtn");
+  const todayGoalText = document.getElementById("todayGoalText");
+  const todayPartText = document.getElementById("todayPartText");
+  const menuContainer = document.getElementById("menuContainer");
+
+  // 先載入推薦
+  let { currentGoal, currentPart } = await loadRecommendation(userName);
+
+  // ✅ 接受推薦 → 直接帶目標/部位進訓練紀錄頁
+  acceptBtn.addEventListener("click", () => {
+    localStorage.setItem("lastGoal", currentGoal);
+    localStorage.setItem("lastPart", currentPart);
+    const url =
+      `training.html?goal=${encodeURIComponent(currentGoal)}` +
+      `&part=${encodeURIComponent(currentPart)}`;
+    window.location.href = url;
+  });
+
+  // ✏️ 我想自己選 → 展開手動設定區塊（留在今日推薦頁）
+  manualBtn.addEventListener("click", () => {
+    manualArea.style.display = manualArea.style.display === "none" ? "block" : "none";
+  });
+
+  // 重新套用手動條件 → 更新今天建議 + 菜單預覽，但人還在今日推薦頁
+  applyManualBtn.addEventListener("click", async () => {
+    currentGoal = manualGoal.value;
+    currentPart = manualPart.value;
+
+    todayGoalText.textContent = currentGoal;
+    todayPartText.textContent = currentPart;
+
+    await loadMenuPreview(userName, currentGoal, currentPart, menuContainer);
+  });
 });
