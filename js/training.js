@@ -207,7 +207,7 @@ async function displayExercises(db, userName, exercises) {
     <button class="btn btn-primary keep-btn">維持（剛剛好）</button>
     <button class="btn btn-danger reduce-btn">減重（太吃力）</button>
   </div>
-  <p style="font-size:12px; color:#777; margin-top:4px;">
+  <p style="font-size:16px; color:#777; margin-top:4px;">
     做不完或做完這個動作後，依照感受選一個：太輕鬆→加重、剛好→維持、太吃力→減重。
   </p>
 
