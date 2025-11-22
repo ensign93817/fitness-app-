@@ -40,7 +40,7 @@ form.addEventListener("submit", async (e) => {
     localStorage.setItem("activeUser", userName);
 
     alert(`✅ ${userName} 資料已儲存成功！`);
-    window.location.href = "training.html"; // 自動跳轉至訓練推薦頁
+    window.location.href = "recommend.html"; // 自動跳轉至訓練推薦頁
   } catch (err) {
     console.error("Firestore 寫入錯誤：", err);
     alert("❌ 資料儲存失敗，請稍後再試。");
