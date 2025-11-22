@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>今日訓練推薦 | Fitness App</title>
+  <link rel="stylesheet" href="./css/style.css" />
+  <style>
+    body {
+      font-family: "Microsoft JhengHei", sans-serif;
+      background-color: #fafafa;
+      margin: 0;
+      padding: 0;
+    }
+    .nav {
+      background-color: #fff;
+      border-bottom: 1px solid #ddd;
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .nav .brand { font-weight: 600; font-size: 20px; }
+    .nav a { text-decoration: none; color: #444; margin-left: 16px; }
+    .nav a.active { color: #198754; font-weight: bold; }
+    .container {
+      max-width: 900px;
+      margin: 40px auto;
+      background: #fff;
+      padding: 32px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+    h1 { text-align: center; margin-bottom: 24px; }
+
+    .summary-box {
+      background: #f5f5f5;
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin-bottom: 24px;
+    }
+    .summary-box p { margin: 4px 0; }
+
+    .btn-row {
+      margin-top: 12px;
+    }
+    .btn {
+      padding: 8px 16px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      margin-right: 8px;
+    }
+    .btn-primary { background:#198754; color:#fff; }
+    .btn-outline { background:#fff; color:#333; border:1px solid #ccc; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: center;
+      font-size: 14px;
+    }
+    th { background:#f1f1f1; }
+
+    .note {
+      margin-top: 10px;
+      font-size: 13px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <div class="brand">🏋️ Fitness App</div>
+    <div class="links">
+      <a href="./index.html">首頁</a>
+      <a href="./profile.html">建立個人資料</a>
+      <a href="./recommend.html" class="active">今日推薦</a>
+      <a href="./training.html">訓練紀錄</a>
+    </div>
+  </nav>
+
+  <main class="container">
+    <h1>今日訓練推薦</h1>
+
+    <section class="summary-box">
+      <p>👤 當前使用者：<b id="userNameDisplay">讀取中...</b></p>
+      <p>📌 上次訓練：目標 <b id="lastGoalDisplay">–</b>，部位 <b id="lastPartDisplay">–</b></p>
+      <p>✅ 今天建議：目標 <b id="todayGoalDisplay">–</b>，部位 <b id="todayPartDisplay">–</b></p>
+
+      <div class="btn-row">
+        <button id="startBtn" class="btn btn-primary">✅ 接受推薦，開始訓練</button>
+        <button id="customBtn" class="btn btn-outline">✏️ 我想自己選</button>
+      </div>
+    </section>
+
+    <section>
+      <h2>推薦訓練菜單</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>動作</th>
+            <th>組數</th>
+            <th>次數</th>
+            <th>休息秒數</th>
+            <th>上次重量 (kg)</th>
+          </tr>
+        </thead>
+        <tbody id="recommendTableBody">
+          <tr><td colspan="5">正在載入推薦菜單...</td></tr>
+        </tbody>
+      </table>
+      <p class="note">※ 推薦依據：上次訓練紀錄與部位循環規則，使用者若不滿意可改用「我想自己選」。</p>
+    </section>
+  </main>
+
+  <script type="module" src="js/firebase.js"></script>
+  <script type="module" src="js/recommend.js"></script>
+</body>
+</html>
