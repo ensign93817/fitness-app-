@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>今日訓練推薦 | Fitness App</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>今日推薦 | Fitness App</title>
   <link rel="stylesheet" href="./css/style.css" />
   <style>
     body {
@@ -12,7 +12,7 @@
       margin: 0;
       padding: 0;
     }
-    .nav {
+    header {
       background-color: #fff;
       border-bottom: 1px solid #ddd;
       padding: 12px 24px;
@@ -20,9 +20,10 @@
       justify-content: space-between;
       align-items: center;
     }
-    .nav .brand { font-weight: 600; font-size: 20px; }
-    .nav a { text-decoration: none; color: #444; margin-left: 16px; }
-    .nav a.active { color: #198754; font-weight: bold; }
+    header .brand { font-weight: 600; font-size: 20px; }
+    header a { text-decoration: none; color: #444; margin-left: 16px; }
+    header a.active { color: #198754; font-weight: bold; }
+
     .container {
       max-width: 900px;
       margin: 40px auto;
@@ -31,96 +32,126 @@
       border-radius: 12px;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     }
+
     h1 { text-align: center; margin-bottom: 24px; }
 
-    .summary-box {
-      background: #f5f5f5;
-      border-radius: 8px;
-      padding: 16px 20px;
-      margin-bottom: 24px;
+    .card {
+      background:#f7f7f7;
+      border-radius:8px;
+      padding:20px;
+      margin-bottom:24px;
     }
-    .summary-box p { margin: 4px 0; }
 
-    .btn-row {
-      margin-top: 12px;
-    }
     .btn {
-      padding: 8px 16px;
+      padding: 8px 14px;
       border-radius: 6px;
       border: none;
       cursor: pointer;
-      font-weight: 600;
-      margin-right: 8px;
+      font-weight: bold;
     }
-    .btn-primary { background:#198754; color:#fff; }
-    .btn-outline { background:#fff; color:#333; border:1px solid #ccc; }
+    .btn-primary {
+      background:#198754;
+      color:#fff;
+    }
+    .btn-outline {
+      background:#fff;
+      border:1px solid #ccc;
+      color:#333;
+    }
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 10px;
+    #manualArea {
+      margin-top:14px;
+      padding-top:12px;
+      border-top:1px dashed #ccc;
+      display:none;
     }
-    th, td {
-      border: 1px solid #ddd;
-      padding: 8px;
-      text-align: center;
-      font-size: 14px;
+    #manualArea label {
+      margin-right:6px;
     }
-    th { background:#f1f1f1; }
+    #manualArea select {
+      margin-right:12px;
+      padding:4px 8px;
+      border-radius:6px;
+      border:1px solid #ccc;
+    }
 
-    .note {
-      margin-top: 10px;
-      font-size: 13px;
-      color: #666;
+    #menuContainer > div {
+      margin-bottom:10px;
+      padding:8px 10px;
+      border-radius:6px;
+      background:#fafafa;
+      border:1px solid #eee;
+    }
+    #menuContainer h3 {
+      margin:0 0 4px 0;
+      font-size:16px;
+    }
+    #menuContainer p {
+      margin:2px 0;
+      font-size:14px;
     }
   </style>
 </head>
 <body>
-  <nav class="nav">
+  <header>
     <div class="brand">🏋️ Fitness App</div>
-    <div class="links">
+    <nav>
       <a href="./index.html">首頁</a>
       <a href="./profile.html">建立個人資料</a>
       <a href="./recommend.html" class="active">今日推薦</a>
       <a href="./training.html">訓練紀錄</a>
-    </div>
-  </nav>
+    </nav>
+  </header>
 
   <main class="container">
-    <h1>今日訓練推薦</h1>
+    <h1>今日推薦</h1>
 
-    <section class="summary-box">
-      <p>👤 當前使用者：<b id="userNameDisplay">讀取中...</b></p>
-      <p>📌 上次訓練：目標 <b id="lastGoalDisplay">–</b>，部位 <b id="lastPartDisplay">–</b></p>
-      <p>✅ 今天建議：目標 <b id="todayGoalDisplay">–</b>，部位 <b id="todayPartDisplay">–</b></p>
+    <!-- 🔹 推薦摘要卡片 -->
+    <section class="card">
+      <p>👤 當前使用者：<b id="userNameText">載入中...</b></p>
+      <p>📌 上次訓練：<span id="lastTrainingText">讀取中...</span></p>
+      <p>✅ 今天建議：目標 <b id="todayGoalText">-</b>，部位 <b id="todayPartText">-</b></p>
 
-      <div class="btn-row">
-        <button id="startBtn" class="btn btn-primary">✅ 接受推薦，開始訓練</button>
-        <button id="customBtn" class="btn btn-outline">✏️ 我想自己選</button>
+      <div style="margin-top:12px;">
+        <button id="acceptBtn" class="btn btn-primary">✅ 接受推薦，開始訓練</button>
+        <button id="manualBtn" class="btn btn-outline">✏️ 我想自己選</button>
+      </div>
+
+      <!-- ✏️ 在今日推薦頁面直接改目標與部位 -->
+      <div id="manualArea">
+        <p style="margin:8px 0;">手動調整今日訓練目標與部位：</p>
+        <label for="manualGoal">訓練目標：</label>
+        <select id="manualGoal">
+          <option value="增肌">增肌</option>
+          <option value="力量">力量</option>
+          <option value="減脂">減脂</option>
+          <option value="耐力">耐力</option>
+        </select>
+
+        <label for="manualPart">訓練部位：</label>
+        <select id="manualPart">
+          <option value="胸部">胸部</option>
+          <option value="背部">背部</option>
+          <option value="腿部">腿部</option>
+          <option value="肩部">肩部</option>
+          <option value="二頭肌">二頭肌</option>
+          <option value="三頭肌">三頭肌</option>
+          <option value="核心">核心</option>
+        </select>
+
+        <button id="applyManualBtn" class="btn btn-primary" style="margin-top:6px;">
+          重新套用條件
+        </button>
       </div>
     </section>
 
+    <!-- 🔹 推薦菜單預覽（只列動作資料，不含按鈕與折線圖） -->
     <section>
       <h2>推薦訓練菜單</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>動作</th>
-            <th>組數</th>
-            <th>次數</th>
-            <th>休息秒數</th>
-            <th>上次重量 (kg)</th>
-          </tr>
-        </thead>
-        <tbody id="recommendTableBody">
-          <tr><td colspan="5">正在載入推薦菜單...</td></tr>
-        </tbody>
-      </table>
-      <p class="note">※ 推薦依據：上次訓練紀錄與部位循環規則，使用者若不滿意可改用「我想自己選」。</p>
+      <div id="menuContainer">正在載入菜單...</div>
     </section>
   </main>
 
-  <script type="module" src="js/firebase.js"></script>
   <script type="module" src="js/recommend.js"></script>
 </body>
 </html>
