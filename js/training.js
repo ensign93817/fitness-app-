@@ -10,17 +10,15 @@ function localISODate() {
   d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
   return d.toISOString().slice(0, 10);
 }
-// ✅ 新增：把時間「壓」成 30 秒一格
+// ✅ 把時間「壓」成 30 秒一格
 function localISODateTime30s() {
   const d = new Date();
   d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
-
-  // 秒數往下取 30 的倍數（0–29 → 0 秒，30–59 → 30 秒）
   const sec = d.getSeconds();
   d.setSeconds(sec - (sec % 30), 0);
-
   return d.toISOString().slice(0, 19).replace("T", " ");
 }
+
 // === 🔥 Firebase SDK 載入 ===
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import {
@@ -71,7 +69,7 @@ async function initUser() {
     if (!userSnap.exists()) {
       alert(`⚠️ 尚未建立基本資料！請先前往「建立個人資料」頁面。`);
       window.location.href = "./profile.html";
-      return;
+      return null;
     }
   } catch (err) {
     console.error("❌ 無法檢查使用者資料：", err);
@@ -88,19 +86,7 @@ async function initUser() {
   return userName;
 }
 
-// 🔁 部位循環順序：用來決定「下一次」要練哪個部位
-const BODY_ORDER = ["胸部", "背部", "腿部", "肩部", "二頭肌", "三頭肌", "核心"];
-
-function getNextBodyPart(lastPart) {
-  const idx = BODY_ORDER.indexOf(lastPart);
-  if (idx === -1) {
-    // 找不到（例如第一次用）：從胸部開始
-    return BODY_ORDER[0];
-  }
-  return BODY_ORDER[(idx + 1) % BODY_ORDER.length];
-}
-
-// === 💪 顯示上次訓練 ===
+// === 💪 顯示上次訓練（維持原本功能） ===
 async function showLastTraining() {
   const userName = localStorage.getItem("userName");
   if (!userName) return;
@@ -125,62 +111,6 @@ async function showLastTraining() {
     }
   } catch (e) {
     console.error("❌ 無法顯示上次訓練紀錄：", e);
-  }
-}
-// === ⭐ 顯示「今日推薦」區塊 ===
-async function showRecommendArea(userName) {
-  const section = document.getElementById("recommendSection");
-  const textEl = document.getElementById("recommendText");
-  const applyBtn = document.getElementById("applyRecommendBtn");
-  const skipBtn = document.getElementById("skipRecommendBtn");
-
-  if (!section || !textEl) return;
-
-  try {
-    const snap = await getDoc(doc(db, "profiles", userName));
-    const data = snap.data();
-
-    // 沒有 lastTraining：顯示「尚無紀錄」，只讓使用者自己選
-    if (!data || !data.lastTraining) {
-      textEl.textContent = "目前尚無訓練紀錄，請先自行選擇目標與訓練部位。";
-      applyBtn.style.display = "none";
-      return;
-    }
-
-    const lastGoal = data.lastTraining.goal || "增肌";
-    const lastPart = data.lastTraining.bodyPart || null;
-    const nextPart = getNextBodyPart(lastPart);
-
-    // 顯示說明文字
-    textEl.textContent =
-      `根據你上次的訓練（目標：${lastGoal}、部位：${lastPart ?? "無紀錄"}），` +
-      `本次推薦：目標「${lastGoal}」，訓練部位「${nextPart}」。`;
-
-    // 點「套用推薦」：自動幫你選好下方的 select，並直接載入菜單
-    applyBtn.onclick = () => {
-      const goalSelect = document.getElementById("goalSelect");
-      const partSelect = document.getElementById("partSelect");
-      const loadBtn = document.getElementById("loadBtn");
-
-      if (goalSelect) goalSelect.value = lastGoal;
-      if (partSelect) partSelect.value = nextPart;
-
-      // 也把這次選擇記到 localStorage，讓原本流程不變
-      localStorage.setItem("lastGoal", lastGoal);
-      localStorage.setItem("lastPart", nextPart);
-
-      // 直接載入推薦菜單
-      loadBtn?.click();
-    };
-
-    // 「我想自己選」：只是把推薦區淡出 / 收起（你可以選擇隱藏或不隱藏）
-    skipBtn.onclick = () => {
-      section.style.display = "none";
-    };
-  } catch (e) {
-    console.error("❌ 無法讀取推薦資訊：", e);
-    textEl.textContent = "推薦區載入失敗，請改用下方選單自行選擇。";
-    applyBtn.style.display = "none";
   }
 }
 
@@ -238,7 +168,7 @@ async function loadMenu(db, userName) {
   }
 }
 
-// === 🏋️‍♀️ 顯示訓練動作 ===
+// === 🏋️‍♀️ 顯示訓練動作 + 折線圖與重量紀錄 ===
 async function displayExercises(db, userName, exercises) {
   const container = document.getElementById("exerciseContainer");
   container.innerHTML = "";
@@ -264,7 +194,6 @@ async function displayExercises(db, userName, exercises) {
     const weights = dates.map(d => history[d]);
     const lastWeight = weights.at(-1) || ex.defaultWeight || ex.weight || 10;
 
-    // === 🧱 建立動作卡片 ===
     const card = document.createElement("div");
     card.className = "card p-3 mb-3 shadow-sm";
     card.innerHTML = `
@@ -281,7 +210,6 @@ async function displayExercises(db, userName, exercises) {
     `;
     container.appendChild(card);
 
-    // === 🎯 三個按鈕邏輯 ===
     const addBtn = card.querySelector(".add-btn");
     const keepBtn = card.querySelector(".keep-btn");
     const reduceBtn = card.querySelector(".reduce-btn");
@@ -289,20 +217,19 @@ async function displayExercises(db, userName, exercises) {
     const delta = 2.5;
     let currentWeight = lastWeight;
 
-
-// ✅ 用「30 秒一格」的時間當 key
-async function saveWeightChange(newWeight) {
-  const slot = localISODateTime30s();  // e.g. 2025-11-14 23:31:30
-  try {
-    await updateDoc(userRef, { [`history.${safeName}.${slot}`]: newWeight });
-  } catch {
-    await setDoc(
-      userRef,
-      { history: { [safeName]: { [slot]: newWeight } } },
-      { merge: true }
-    );
-  }
-}
+    // ✅ 用「30 秒一格」的時間當 key
+    async function saveWeightChange(newWeight) {
+      const slot = localISODateTime30s();
+      try {
+        await updateDoc(userRef, { [`history.${safeName}.${slot}`]: newWeight });
+      } catch {
+        await setDoc(
+          userRef,
+          { history: { [safeName]: { [slot]: newWeight } } },
+          { merge: true }
+        );
+      }
+    }
 
     addBtn.addEventListener("click", async () => {
       currentWeight += delta;
@@ -321,7 +248,6 @@ async function saveWeightChange(newWeight) {
       await saveWeightChange(currentWeight);
     });
 
-    // === 📊 建立圖表 ===
     const ctx = document.getElementById(`chart-${i}`);
     const chart = new Chart(ctx, {
       type: "line",
@@ -343,7 +269,6 @@ async function saveWeightChange(newWeight) {
       },
     });
 
-    // 保持原本每秒從 Firestore 抓資料更新圖
     setInterval(async () => {
       try {
         const snap = await getDoc(userRef);
@@ -365,10 +290,8 @@ async function saveWeightChange(newWeight) {
     charts.push({ safeName, chart });
   }
 
-  // === ✅ 若按鈕已存在則不重複建立 ===
   if (document.getElementById("completeTrainingBtn")) return;
 
-  // === ✅ 完成訓練按鈕 ===
   const completeBtn = document.createElement("button");
   completeBtn.id = "completeTrainingBtn";
   completeBtn.className = "btn btn-success";
@@ -376,7 +299,6 @@ async function saveWeightChange(newWeight) {
   completeBtn.style = "display:block;margin:30px auto;padding:10px 20px;font-size:18px;";
   container.insertAdjacentElement("afterend", completeBtn);
 
-  // === ✅ 完成訓練事件 ===
   completeBtn.addEventListener("click", async () => {
     const today = localISODate();
     const cards = document.querySelectorAll(".card");
@@ -389,7 +311,6 @@ async function saveWeightChange(newWeight) {
       const weight = parseFloat(card.querySelector(".weight").textContent.replace(/[^\d.]/g, "")) || 0;
       const slot = localISODateTime30s();
       updates[`history.${safeName}.${slot}`] = weight;
-
       total += weight;
     }
 
@@ -425,12 +346,29 @@ async function saveWeightChange(newWeight) {
       console.warn("❌ 無法讀取上次訓練紀錄：", e);
     }
   });
-}  // 👈 這裡才是整個 displayExercises 的唯一結尾大括號
+}
 
-// === 🚀 頁面啟動 ===
+// === 🚀 頁面啟動（含：若有 ?goal & ?part 就自動載入菜單） ===
 window.addEventListener("DOMContentLoaded", async () => {
   const userName = await initUser();
+  if (!userName) return;
+
   await showLastTraining();
-  await showRecommendArea(userName);
-  document.getElementById("loadBtn")?.addEventListener("click", () => loadMenu(db, userName));
+
+  const loadBtn = document.getElementById("loadBtn");
+  const goalSelect = document.getElementById("goalSelect");
+  const partSelect = document.getElementById("partSelect");
+
+  const params = new URLSearchParams(window.location.search);
+  const goal = params.get("goal");
+  const part = params.get("part");
+
+  // 若從 recommend.html 帶參數過來，直接載入推薦菜單
+  if (goal && part && goalSelect && partSelect) {
+    goalSelect.value = goal;
+    partSelect.value = part;
+    await loadMenu(db, userName);
+  }
+
+  loadBtn?.addEventListener("click", () => loadMenu(db, userName));
 });
