@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>訓後回顧 | Fitness App</title>
+  <link rel="stylesheet" href="./css/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: "Microsoft JhengHei", sans-serif;
+      background-color: #fafafa;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background-color: #fff;
+      border-bottom: 1px solid #ddd;
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    header .brand { font-weight: 600; font-size: 20px; }
+    header a { text-decoration: none; color: #444; margin-left: 16px; }
+    header a.active { color: #198754; font-weight: bold; }
+
+    .container {
+      max-width: 900px;
+      margin: 40px auto;
+      background: #fff;
+      padding: 32px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+    h1 { text-align:center; margin-bottom: 16px; }
+
+    .summary {
+      margin-bottom: 20px;
+      font-size: 15px;
+      line-height: 1.8;
+    }
+
+    .tip-box {
+      max-width: 620px;
+      margin: 0 auto 24px;
+      padding: 10px 16px;
+      border-radius: 8px;
+      background:#f8f9fa;
+      font-size: 14px;
+      line-height: 1.6;
+      color:#555;
+    }
+
+    .exercise-card {
+      margin-bottom: 28px;
+      padding: 16px 18px;
+      border-radius: 10px;
+      background:#f7f7f7;
+      border:1px solid #eee;
+    }
+    .exercise-card h3 {
+      margin: 0 0 6px 0;
+      font-size: 16px;
+    }
+    .comment {
+      margin-top: 10px;
+      font-size: 14px;
+      color:#444;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">🏋️ Fitness App</div>
+    <nav>
+      <a href="./index.html">首頁</a>
+      <a href="./profile.html">建立個人資料</a>
+      <a href="./recommend.html">今日推薦</a>
+      <a href="./training.html">訓練紀錄</a>
+    </nav>
+  </header>
+
+  <main class="container">
+    <h1>訓後回顧</h1>
+
+    <div class="summary" id="summaryText">
+      讀取今天的訓練紀錄中...
+    </div>
+
+    <!-- 🧾 新手操作說明（放在回顧頁一樣適用） -->
+    <div class="tip-box">
+      <b>如何使用訓練紀錄：</b><br>
+      ① 依照推薦重量完成本次訓練。<br>
+      ② 每個動作做完今天的組數後，依照感受按一下
+      <span style="color:#198754;">【加重】</span>、
+      <span style="color:#0d6efd;">【維持】</span> 或
+      <span style="color:#dc3545;">【減重】</span>。<br>
+      ③ 系統會記錄你的選擇並更新下一次的推薦重量，最後按下最下方的
+      <b>「✅ 完成訓練」</b> 儲存今天的總重量，並在本頁回顧你的表現。
+    </div>
+
+    <section id="chartsContainer">
+      <!-- JS 會在這裡塞每個動作的折線圖卡片 -->
+    </section>
+
+    <div id="overallComment" style="margin-top: 16px; font-size:15px; font-weight:500;"></div>
+  </main>
+
+  <script type="module" src="js/feedback.js"></script>
+</body>
+</html>
