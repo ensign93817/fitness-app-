@@ -1,156 +1,145 @@
 // js/feedback.js
+// 只顯示「當次訓練」的回顧圖表與鼓勵文字
+// 依賴：feedback.html 已經有載入 Chart.js：
+// <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-// === 🔥 Firebase SDK ===
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import {
-  getFirestore,
-  doc,
-  getDoc,
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-// === ⚙️ Firebase 初始化設定（跟其他頁面一樣） ===
-const firebaseConfig = {
-  apiKey: "AIzaSyBur0DoRPT0csPqtyDSOQBYMjlGaqf3EB0",
-  authDomain: "fitness-guide-9a8f3.firebaseapp.com",
-  projectId: "fitness-guide-9a8f3",
-  storageBucket: "fitness-guide-9a8f3.firebasestorage.app",
-  messagingSenderId: "969288112649",
-  appId: "1:969288112649:web:58b5b807c410388b1836d8",
-  measurementId: "G-7X1L324K0Q",
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-// 小工具：算趨勢文字
+// === 小工具：產生鼓勵文字（看這次的折線往上、持平、往下） ===
 function buildComment(weights) {
   if (!weights || weights.length === 0) {
-    return "目前還沒有這個動作的重量紀錄，下次訓練可以試著按一次【加重 / 維持 / 減重】留下紀錄。";
+    return "今天這個動作還沒有重量紀錄，可以回到訓練紀錄頁面，做完覺得太輕鬆 / 剛剛好 / 太吃力時按一下按鈕試試看。";
   }
   if (weights.length === 1) {
-    return "已經有第一次的重量紀錄了，持續紀錄幾次就能看到自己的進步軌跡！";
+    return "已經留下第一筆紀錄了！多累積幾次之後，會很清楚看到自己的進步軌跡。💪";
   }
+
   const first = weights[0];
   const last = weights[weights.length - 1];
 
   if (first === 0) {
-    return "已經累積了一些紀錄，持續穩定訓練最重要，加油！";
+    return "已經有一些紀錄囉，持續穩定訓練最重要，今天辛苦了！";
   }
 
-  const ratio = (last - first) / first;
+  const ratio = (last - first) / first;   // 相對變化
 
   if (ratio > 0.05) {
-    return "最近這個動作的重量有明顯往上，漸進超負荷做得很棒，保持！💪";
+    return "這次的重量比一開始高不少，漸進超負荷做得很棒，持續維持這個節奏！🔥";
   } else if (ratio > -0.05) {
-    return "重量大致維持在同一個區間，代表你有穩定訓練，之後可以依照感受再慢慢調整。👍";
+    return "重量大致維持在同一個區間，代表訓練穩定，之後可以依照感受再微調重量。👍";
+  } else {
+    return "這次的重量稍微比一開始低一點，可能是在調整動作或身體比較疲勞，記得好好休息、補水，下次再衝就好！💪";
   }
-  return "最近重量稍微下降，可能是在調整動作或身體比較疲勞，記得休息、補充營養，下次再衝就好！🔥";
-}
-
-// 把 safeName 轉成好讀一點的名稱
-function displayNameFromSafeName(safeName) {
-  return (safeName || "").replace(/_/g, " ");
 }
 
 // === 🚀 頁面啟動 ===
-window.addEventListener("DOMContentLoaded", async () => {
-  const userName = localStorage.getItem("userName");
-  const summaryUser = document.getElementById("summaryUser");
-  const summaryLast = document.getElementById("summaryLast");
-  const container = document.getElementById("feedbackContainer");
+window.addEventListener("DOMContentLoaded", () => {
+  // 1. 讀取訓練頁在「完成訓練」時存到 localStorage 的資料
+  const raw = localStorage.getItem("lastFeedbackData");
 
-  if (!userName) {
-    alert("找不到使用者名稱，請先到訓練紀錄頁登入一次使用者。");
-    window.location.href = "./training.html";
+  if (!raw) {
+    // 找不到資料 → 給一個簡單畫面，請使用者先去做一次訓練
+    const container = document.getElementById("feedbackContainer");
+    if (container) {
+      container.innerHTML = "<p>❌ 找不到當次訓練資料，請先在「訓練紀錄」頁完成一次訓練，再回來查看訓後回顧。</p>";
+    }
     return;
   }
 
-  summaryUser.textContent = userName;
-
+  let data;
   try {
-    const userRef = doc(db, "profiles", userName);
-    const snap = await getDoc(userRef);
-
-    if (!snap.exists()) {
-      summaryLast.textContent = "尚未建立個人資料。";
-      container.textContent = "找不到訓練紀錄。";
-      return;
-    }
-
-    const data = snap.data();
-    const history = data.history || {};
-
-    // 最近一次訓練摘要
-    if (data.lastTraining) {
-      const lt = data.lastTraining;
-      summaryLast.textContent =
-        `${lt.date || "（未記錄日期）"}，目標「${lt.goal || "-"}」，部位「${lt.bodyPart || "-"}」`;
-    } else {
-      summaryLast.textContent = "尚未有「完成訓練」的紀錄。";
-    }
-
-    // 沒有 history 直接結束
-    const entries = Object.entries(history);
-    if (entries.length === 0) {
-      container.textContent = "目前還沒有任何重量歷史紀錄，從訓練紀錄頁面開始按【加重／維持／減重】就會累積資料囉。";
-      return;
-    }
-
-    container.innerHTML = "";
-
-    let idx = 1;
-    for (const [safeName, seriesObj] of entries) {
-      // seriesObj: { timestamp: weight, ... }
-      const timestamps = Object.keys(seriesObj).sort(); // 舊→新
-      if (timestamps.length === 0) continue;
-
-      const lastKeys = timestamps.slice(-30); // 最近 30 筆
-      const weights = lastKeys.map((t) => seriesObj[t]);
-      const labels = lastKeys.map((_, i) => `第 ${timestamps.length - lastKeys.length + i + 1} 次`);
-
-      const niceName = displayNameFromSafeName(safeName);
-      const comment = buildComment(weights);
-
-      // 建 card
-      const card = document.createElement("div");
-      card.className = "card";
-      card.innerHTML = `
-        <h3>${idx}. ${niceName}</h3>
-        <small>本圖顯示最近 ${weights.length} 次重量變化（最多 30 次）。</small>
-        <canvas id="chart-${safeName}" height="120" style="margin-top:8px;"></canvas>
-        <p class="comment">${comment}</p>
-      `;
-      container.appendChild(card);
-
-      // 畫圖
-      const ctx = document.getElementById(`chart-${safeName}`);
-      new Chart(ctx, {
-        type: "line",
-        data: {
-          labels,
-          datasets: [
-            {
-              label: "重量 (kg)",
-              data: weights,
-              borderColor: "#0d6efd",
-              backgroundColor: "rgba(13,110,253,0.1)",
-              tension: 0.2,
-            },
-          ],
-        },
-        options: {
-          animation: false,
-          scales: {
-            y: { beginAtZero: true },
-          },
-        },
-      });
-
-      idx++;
-    }
+    data = JSON.parse(raw);
   } catch (e) {
-    console.error("❌ 載入回顧資料失敗：", e);
-    summaryLast.textContent = "讀取資料時發生錯誤。";
-    container.textContent = "無法載入回顧資料，稍後再試一次。";
+    console.error("解析 lastFeedbackData 失敗：", e);
+    const container = document.getElementById("feedbackContainer");
+    if (container) {
+      container.innerHTML = "<p>❌ 回顧資料格式錯誤，請重新完成一次訓練。</p>";
+    }
+    return;
+  }
+
+  const userName = localStorage.getItem("userName") || "未命名使用者";
+
+  // 2. 填寫上方摘要（日期／目標／部位／總重量）
+  const dateText        = document.getElementById("dateText");
+  const goalText        = document.getElementById("goalText");
+  const partText        = document.getElementById("partText");
+  const totalWeightText = document.getElementById("totalWeightText");
+  const summaryUser     = document.getElementById("summaryUser"); // 如果你有放使用者名字
+
+  if (summaryUser) summaryUser.textContent = userName;
+  if (dateText)  dateText.textContent  = data.date  || "（未記錄）";
+  if (goalText)  goalText.textContent  = data.goal  || "-";
+  if (partText)  partText.textContent  = data.bodyPart || "-";
+  if (totalWeightText && typeof data.totalWeight === "number") {
+    totalWeightText.textContent = data.totalWeight.toFixed(1) + " kg";
+  }
+
+  // 3. 依照當次 sessionSeries 畫每個動作的折線圖
+  const container = document.getElementById("feedbackContainer");
+  if (!container) return;
+  container.innerHTML = "";
+
+  const series = data.sessionSeries || {};
+  const keys = Object.keys(series);
+
+  if (keys.length === 0) {
+    container.innerHTML =
+      "<p>今天還沒有任何重量紀錄。回到訓練紀錄頁，做完動作後依照感受按一下【加重 / 維持 / 減重】，就會在這裡看到圖表囉！</p>";
+    return;
+  }
+
+  let i = 1;
+  for (const key of keys) {
+    const ex = series[key];
+    const weights = ex.weights || [];
+    const count = weights.length;
+
+    // 動作若完全沒紀錄就跳過
+    if (count === 0) continue;
+
+    // 建立卡片
+    const card = document.createElement("div");
+    card.className = "card p-3 mb-4";
+    card.innerHTML = `
+      <h4>${i}. ${ex.name}</h4>
+      <p>本次共記錄 ${count} 筆重量變化（最多 30 筆）。</p>
+      <canvas id="chart-${i}" height="130"></canvas>
+      <p class="comment" style="margin-top:8px;color:#555;">${buildComment(weights)}</p>
+    `;
+    container.appendChild(card);
+
+    // 建立 X 軸標籤：「第 1 次、 第 2 次…」
+    const labels = weights.map((_, idx) => `第 ${idx + 1} 次`);
+
+    // 畫圖
+    const ctx = document.getElementById(`chart-${i}`);
+    new Chart(ctx, {
+      type: "line",
+      data: {
+        labels,
+        datasets: [
+          {
+            label: "重量 (kg)",
+            data: weights,
+            borderColor: "#0d6efd",
+            backgroundColor: "rgba(13,110,253,0.12)",
+            tension: 0.2,
+          },
+        ],
+      },
+      options: {
+        animation: false,
+        scales: {
+          y: { beginAtZero: true },
+        },
+      },
+    });
+
+    i++;
+  }
+
+  // 如果所有動作都被跳過（都沒 weights），也給提示
+  if (!container.children.length) {
+    container.innerHTML =
+      "<p>今天雖然有完成訓練，但沒有任何按下【加重 / 維持 / 減重】的紀錄，因此沒有可以繪製的圖表。</p>";
   }
 });
