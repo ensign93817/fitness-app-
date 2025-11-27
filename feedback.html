@@ -5,7 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>訓後回顧 | Fitness App</title>
   <link rel="stylesheet" href="./css/style.css" />
+
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <style>
     body {
       font-family: "Microsoft JhengHei", sans-serif;
@@ -33,39 +35,46 @@
       border-radius: 12px;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     }
-    h1 { text-align:center; margin-bottom: 16px; }
 
-    .summary {
-      margin-bottom: 20px;
-      font-size: 15px;
-      line-height: 1.8;
-    }
+    h1 { text-align: center; margin-bottom: 20px; }
 
-    .tip-box {
-      max-width: 620px;
-      margin: 0 auto 24px;
+    .hint-box {
+      max-width: 700px;
+      margin: 0 auto 20px;
       padding: 10px 16px;
       border-radius: 8px;
       background:#f8f9fa;
       font-size: 14px;
-      line-height: 1.6;
+      line-height: 1.7;
       color:#555;
     }
 
-    .exercise-card {
-      margin-bottom: 28px;
-      padding: 16px 18px;
-      border-radius: 10px;
-      background:#f7f7f7;
-      border:1px solid #eee;
-    }
-    .exercise-card h3 {
-      margin: 0 0 6px 0;
-      font-size: 16px;
-    }
-    .comment {
-      margin-top: 10px;
+    .summary-row {
       font-size: 14px;
+      margin-bottom: 20px;
+      color:#555;
+    }
+
+    .card {
+      background:#f7f7f7;
+      border-radius:8px;
+      padding:16px 18px;
+      margin-bottom:24px;
+    }
+
+    .card h3 {
+      margin:0 0 4px 0;
+      font-size:16px;
+    }
+
+    .card small {
+      color:#777;
+      font-size:12px;
+    }
+
+    .comment {
+      margin-top:8px;
+      font-size:14px;
       color:#444;
     }
   </style>
@@ -78,33 +87,35 @@
       <a href="./profile.html">建立個人資料</a>
       <a href="./recommend.html">今日推薦</a>
       <a href="./training.html">訓練紀錄</a>
+      <a href="./feedback.html" class="active">訓後回顧</a>
     </nav>
   </header>
 
   <main class="container">
     <h1>訓後回顧</h1>
 
-    <div class="summary" id="summaryText">
-      讀取今天的訓練紀錄中...
+    <div class="summary-row">
+      👤 使用者：<b id="summaryUser">載入中...</b><br/>
+      📅 最近一次訓練：<span id="summaryLast">讀取中...</span>
     </div>
 
-    <!-- 🧾 新手操作說明（放在回顧頁一樣適用） -->
-    <div class="tip-box">
-      <b>如何使用訓練紀錄：</b><br>
-      ① 依照推薦重量完成本次訓練。<br>
-      ② 每個動作做完今天的組數後，依照感受按一下
+    <!-- 🧾 長期歷史使用說明 -->
+    <div class="hint-box">
+      <b>如何看這個回顧頁面？</b><br>
+      ① 每一張圖代表一個訓練動作，最多顯示 <b>最近 30 次</b> 的重量紀錄。<br>
+      ② 每次在訓練紀錄頁面按下
       <span style="color:#198754;">【加重】</span>、
       <span style="color:#0d6efd;">【維持】</span> 或
-      <span style="color:#dc3545;">【減重】</span>。<br>
-      ③ 系統會記錄你的選擇並更新下一次的推薦重量，最後按下最下方的
-      <b>「✅ 完成訓練」</b> 儲存今天的總重量，並在本頁回顧你的表現。
+      <span style="color:#dc3545;">【減重】</span>，
+      系統都會幫你留下當下的重量。<br>
+      ③ 線條往上代表最近有慢慢加重，維持代表穩定訓練，往下則可能是調整姿勢或太累，
+      記得好好休息，下次再加油就好。💪
     </div>
 
-    <section id="chartsContainer">
-      <!-- JS 會在這裡塞每個動作的折線圖卡片 -->
+    <!-- 各動作的長期圖表 -->
+    <section id="feedbackContainer">
+      載入中...
     </section>
-
-    <div id="overallComment" style="margin-top: 16px; font-size:15px; font-weight:500;"></div>
   </main>
 
   <script type="module" src="js/feedback.js"></script>
