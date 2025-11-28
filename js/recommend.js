@@ -1,3 +1,8 @@
+// === 🔐 統一 safeName 規則（這裡主要用在歷史重量查詢用的 key） ===
+function makeSafeName(name) {
+  return (name || "").replace(/[^\w一-龥ㄱ-ㅎㅏ-ㅣ]/g, "_");
+}
+
 // === 🔥 Firebase SDK 載入 ===
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import {
@@ -21,7 +26,8 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 // 🔁 部位循環順序：用來決定「下一次」要練哪個部位
-const BODY_ORDER = ["胸部", "背部", "腿部", "肩部", "手部▫ 二頭肌（Biceps) ", "三頭肌（Triceps） ", "核心"];
+// ❗ 這裡改成乾淨的中文名稱，對應 menus 裡的 docId：${goal}_${part}
+const BODY_ORDER = ["胸部", "背部", "腿部", "肩部", "二頭肌", "三頭肌", "核心"];
 
 function getNextBodyPart(lastPart) {
   const idx = BODY_ORDER.indexOf(lastPart);
@@ -146,11 +152,13 @@ async function loadMenuPreview(userName, goal, part, menuContainer) {
 
     menuContainer.innerHTML = "";
     exercises.forEach((ex, idx) => {
-      const safeName = (ex.name || "").replace(/[\/\[\]#$.()\s（）]/g, "_");
+      const safeName = makeSafeName(ex.name);
       const history = historyAll[safeName] || {};
       const dates = Object.keys(history).sort();
       const lastWeight =
-        dates.length > 0 ? history[dates[dates.length - 1]] : (ex.defaultWeight || ex.weight || "尚無紀錄");
+        dates.length > 0
+          ? history[dates[dates.length - 1]]
+          : (ex.defaultWeight || ex.weight || "尚無紀錄");
 
       const div = document.createElement("div");
       div.innerHTML = `
