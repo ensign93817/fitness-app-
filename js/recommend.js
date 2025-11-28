@@ -21,7 +21,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 // 🔁 部位循環順序：用來決定「下一次」要練哪個部位
-const BODY_ORDER = ["胸部", "背部", "腿部", "肩部", "手部▫ 二頭肌（Biceps)", "三頭肌（Triceps）", "核心"];
+const BODY_ORDER = ["胸部", "背部", "腿部", "肩部", "手部▫ 二頭肌（Biceps) ", "三頭肌（Triceps） ", "核心"];
 
 function getNextBodyPart(lastPart) {
   const idx = BODY_ORDER.indexOf(lastPart);
