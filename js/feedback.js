@@ -1,5 +1,6 @@
 // js/feedback.js
 // 只顯示「當次訓練」的回顧圖表與鼓勵文字
+// 資料來源：training.js 完成訓練時寫入的 localStorage["lastFeedbackData"]
 // 依賴：feedback.html 已經有載入 Chart.js：
 // <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -93,7 +94,7 @@ window.addEventListener("DOMContentLoaded", () => {
     const weights = ex.weights || [];
     const count = weights.length;
 
-    // 動作若完全沒紀錄就跳過
+    // 動作若完全沒紀錄就跳過（理論上 training.js 已經保證至少 1 筆）
     if (count === 0) continue;
 
     // 建立卡片
