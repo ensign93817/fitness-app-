@@ -176,6 +176,19 @@ async function loadMenu(db, userName) {
     loadBtn.textContent = "載入菜單";
   }
 }
+// 🔎 兼容舊版 safeName：讀歷史時同時嘗試舊的 key
+function getHistoryForExercise(userData, exerciseName) {
+  const allHistory = userData.history || {};
+  const keyNew   = makeSafeName(exerciseName);
+  const keyOld1  = (exerciseName || "").replace(/[\/\[\]#$.()\s（）]/g, "_");
+  const keyOld2  = (exerciseName || "").replace(/[^\wㄱ-ㅎㅏ-ㅣ가-힣一-龥]/g, "_");
+
+  if (allHistory[keyNew])  return allHistory[keyNew];
+  if (allHistory[keyOld1]) return allHistory[keyOld1];
+  if (allHistory[keyOld2]) return allHistory[keyOld2];
+
+  return {}; // 找不到就回傳空物件
+}
 
 // === 🏋️‍♀️ 顯示訓練動作 ===
 async function displayExercises(db, userName, exercises) {
@@ -198,10 +211,11 @@ async function displayExercises(db, userName, exercises) {
   for (let i = 0; i < uniqueExercises.length; i++) {
     const ex = uniqueExercises[i];
     const safeName = makeSafeName(ex.name);
-    const history = userData.history?.[safeName] || {};
-    const dates = Object.keys(history).sort();
-    const weights = dates.map(d => history[d]);
-    const lastWeight = weights.at(-1) || ex.defaultWeight || ex.weight || 10;
+const history = getHistoryForExercise(userData, ex.name);
+const dates = Object.keys(history).sort();
+const weights = dates.map(d => history[d]);
+const lastWeight = weights.at(-1) || ex.defaultWeight || ex.weight || 10;
+
 
     // 初始化當次 sessionSeries 結構（先不塞 weights，在按鈕 / 完成時處理）
     if (!sessionSeries[safeName]) {
