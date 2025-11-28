@@ -250,13 +250,16 @@ async function displayExercises(db, userName, exercises) {
       if (sessionSeries[safeName].weights.length < 30) {
         sessionSeries[safeName].weights.push(newWeight);
       }
-    }
-
-    addBtn.addEventListener("click", () => {
-      currentWeight += delta;
-      weightText.textContent = `目前重量：${currentWeight.toFixed(1)} kg`;
-      saveWeightChange(currentWeight);
-    });
+    
+  // 🔵 額外：即時更新當前這個動作的圖表（只動前端，不寫 Firestore）
+  const chartObj = charts.find(c => c.safeName === safeName);
+  if (chartObj) {
+    const ch = chartObj.chart;
+    ch.data.labels.push(`第 ${ch.data.labels.length + 1} 次`);
+    ch.data.datasets[0].data.push(newWeight);
+    ch.update();
+  }
+}
 
     keepBtn.addEventListener("click", () => {
       alert(`💪 維持重量 ${currentWeight.toFixed(1)} kg`);
