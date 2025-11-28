@@ -19,6 +19,11 @@ function localISODateTime30s() {
   return d.toISOString().slice(0, 19).replace("T", " ");
 }
 
+// 🔐 統一 safeName 規則
+function makeSafeName(name) {
+  return (name || "").replace(/[^\w一-龥ㄱ-ㅎㅏ-ㅣ]/g, "_");
+}
+
 // === 🔥 Firebase SDK 載入 ===
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import {
@@ -44,6 +49,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 // 🔴 當次訓練的重量序列（只存本次，用來給 feedback.html 畫圖）
+// 結構：sessionSeries[safeName] = { name, weights: [w1, w2, ...] }
 const sessionSeries = {};
 
 // === 👤 初始化使用者 ===
@@ -191,19 +197,27 @@ async function displayExercises(db, userName, exercises) {
 
   for (let i = 0; i < uniqueExercises.length; i++) {
     const ex = uniqueExercises[i];
-    const safeName = ex.name.replace(/[\/\[\]#$.()\s（）]/g, "_");
+    const safeName = makeSafeName(ex.name);
     const history = userData.history?.[safeName] || {};
     const dates = Object.keys(history).sort();
     const weights = dates.map(d => history[d]);
     const lastWeight = weights.at(-1) || ex.defaultWeight || ex.weight || 10;
 
+    // 初始化當次 sessionSeries 結構（先不塞 weights，在按鈕 / 完成時處理）
+    if (!sessionSeries[safeName]) {
+      sessionSeries[safeName] = { name: ex.name, weights: [] };
+    }
+
     const card = document.createElement("div");
     card.className = "card p-3 mb-3 shadow-sm";
+    card.dataset.safeName = safeName; // ✅ 之後完成訓練好取得 safeName
+    card.dataset.exerciseName = ex.name;
+
     card.innerHTML = `
       <h4>${i + 1}. ${ex.name}</h4>
       <p>組數：${ex.defaultSets || "未設定"}　次數：${ex.defaultReps || "未設定"}</p>
       <p>休息：${ex.restSec || "未設定"} 秒</p>
-      <p class="weight">推薦重量：${lastWeight || "尚未有紀錄"} kg</p>
+      <p class="weight">目前重量：${lastWeight || "尚未有紀錄"} kg</p>
 
       <div class="btn-group mb-2">
         <button class="btn btn-success add-btn">加重（太輕鬆）</button>
@@ -225,8 +239,8 @@ async function displayExercises(db, userName, exercises) {
     const delta = 2.5;
     let currentWeight = lastWeight;
 
-      // ✅ 只記錄「本次訓練」的序列，真正寫入歷史放在「完成訓練」那邊
-    async function saveWeightChange(newWeight) {
+    // ✅ 只記錄「本次訓練」的序列，真正寫入歷史放在「完成訓練」那邊
+    function saveWeightChange(newWeight) {
       if (!sessionSeries[safeName]) {
         sessionSeries[safeName] = {
           name: ex.name,
@@ -238,21 +252,21 @@ async function displayExercises(db, userName, exercises) {
       }
     }
 
-    addBtn.addEventListener("click", async () => {
+    addBtn.addEventListener("click", () => {
       currentWeight += delta;
-      weightText.textContent = `重量：${currentWeight.toFixed(1)} kg`;
-      await saveWeightChange(currentWeight);
+      weightText.textContent = `目前重量：${currentWeight.toFixed(1)} kg`;
+      saveWeightChange(currentWeight);
     });
 
-    keepBtn.addEventListener("click", async () => {
+    keepBtn.addEventListener("click", () => {
       alert(`💪 維持重量 ${currentWeight.toFixed(1)} kg`);
-      await saveWeightChange(currentWeight);
+      saveWeightChange(currentWeight);
     });
 
-    reduceBtn.addEventListener("click", async () => {
+    reduceBtn.addEventListener("click", () => {
       currentWeight = Math.max(0, currentWeight - delta);
-      weightText.textContent = `重量：${currentWeight.toFixed(1)} kg`;
-      await saveWeightChange(currentWeight);
+      weightText.textContent = `目前重量：${currentWeight.toFixed(1)} kg`;
+      saveWeightChange(currentWeight);
     });
 
     const ctx = document.getElementById(`chart-${i}`);
@@ -276,6 +290,7 @@ async function displayExercises(db, userName, exercises) {
       },
     });
 
+    // 這段是去抓 Firebase 歷史更新圖表，保留即可
     setInterval(async () => {
       try {
         const snap = await getDoc(userRef);
@@ -309,17 +324,32 @@ async function displayExercises(db, userName, exercises) {
   // === ✅ 完成訓練事件 ===
   completeBtn.addEventListener("click", async () => {
     const today = localISODate();
-    const cards = document.querySelectorAll(".card");
+    const cards = document.querySelectorAll("#exerciseContainer .card");
     let total = 0;
     const updates = {};
 
+    // 💡 1. 先從畫面抓出每個動作的最終重量（有沒有按按鈕都抓得到）
     for (const card of cards) {
-      const name = card.querySelector("h4").textContent;
-      const safeName = name.replace(/[^\wㄱ-ㅎㅏ-ㅣ가-힣一-龥]/g, "_");
-      const weight = parseFloat(card.querySelector(".weight").textContent.replace(/[^\d.]/g, "")) || 0;
+      const nameText = card.dataset.exerciseName || card.querySelector("h4").textContent;
+      const pureName = nameText.replace(/^\d+\.\s*/, ""); // 去掉「1. 」
+      const safeName = makeSafeName(pureName);
+
+      const weightStr = card.querySelector(".weight").textContent;
+      const weight = parseFloat(weightStr.replace(/[^\d.]/g, "")) || 0;
+
       const slot = localISODateTime30s();
       updates[`history.${safeName}.${slot}`] = weight;
       total += weight;
+
+      // 💡 2. 確保 sessionSeries 也有一筆（沒按按鈕也會有圖）
+      if (!sessionSeries[safeName]) {
+        sessionSeries[safeName] = {
+          name: pureName,
+          weights: [weight]
+        };
+      } else if (!sessionSeries[safeName].weights || sessionSeries[safeName].weights.length === 0) {
+        sessionSeries[safeName].weights = [weight];
+      }
     }
 
     try {
@@ -364,7 +394,7 @@ async function displayExercises(db, userName, exercises) {
 
       await showLastTraining();
 
-      // 🔴 導向訓後回顧頁面（之後你會用 feedback.html 來畫 30 次 vs 重量）
+      // 🔴 導向訓後回顧頁面
       window.location.href = "feedback.html";
     } catch (e) {
       console.warn("❌ 完成訓練寫入失敗：", e);
