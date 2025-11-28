@@ -225,20 +225,8 @@ async function displayExercises(db, userName, exercises) {
     const delta = 2.5;
     let currentWeight = lastWeight;
 
-    // ✅ 用 30 秒一格當 key，同時記錄本次訓練序列
+      // ✅ 只記錄「本次訓練」的序列，真正寫入歷史放在「完成訓練」那邊
     async function saveWeightChange(newWeight) {
-      const slot = localISODateTime30s();
-
-      try {
-        await updateDoc(userRef, { [`history.${safeName}.${slot}`]: newWeight });
-      } catch {
-        await setDoc(
-          userRef,
-          { history: { [safeName]: { [slot]: newWeight } } },
-          { merge: true }
-        );
-      }
-
       if (!sessionSeries[safeName]) {
         sessionSeries[safeName] = {
           name: ex.name,
