@@ -2,6 +2,16 @@
 function makeSafeName(name) {
   return (name || "").replace(/[^\w一-龥ㄱ-ㅎㅏ-ㅣ]/g, "_");
 }
+function getMenuDocPart(part) {
+  switch (part) {
+    case "二頭肌":
+      return "手部-二頭肌（Biceps）";   // ← 這裡請填你 Firestore 內真正的 doc 名稱
+    case "三頭肌":
+      return "手部-三頭肌（Triceps）";  // ← 這裡同上（如果沒有就刪掉）
+    default:
+      return part;
+  }
+}
 
 // === 🔥 Firebase SDK 載入 ===
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
