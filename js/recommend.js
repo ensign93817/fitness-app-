@@ -1,17 +1,23 @@
-// === 🔐 統一 safeName 規則（這裡主要用在歷史重量查詢用的 key） ===
+// === 🔐 統一 safeName 規則
 function makeSafeName(name) {
   return (name || "").replace(/[^\w一-龥ㄱ-ㅎㅏ-ㅣ]/g, "_");
 }
+
+// === 🔧 部位顯示名稱 → Firestore 菜單 doc 的實際名稱
 function getMenuDocPart(part) {
   switch (part) {
     case "二頭肌":
-      return "手部-二頭肌（Biceps）";   // ← 這裡請填你 Firestore 內真正的 doc 名稱
+      // ✅ 這個字串要跟 Firestore「menus」裡看到的 doc ID 完全一樣
+      //   增肌_手部-二頭肌 (Biceps)
+      return "手部▫ 二頭肌（Biceps）";
     case "三頭肌":
-      return "手部-三頭肌（Triceps）";  // ← 這裡同上（如果沒有就刪掉）
+      // 減脂_三頭肌(Triceps)、增肌_三頭肌(Triceps) → doc ID 形式一樣
+      return "三頭肌(Triceps)";
     default:
-      return part;
+      return part; // 其他（胸部、背部、腿部、肩部、核心）一律直接用
   }
 }
+
 
 // === 🔥 Firebase SDK 載入 ===
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -141,8 +147,8 @@ async function loadMenuPreview(userName, goal, part, menuContainer) {
   menuContainer.textContent = "正在載入菜單...";
 
   try {
-    const docPart = getMenuDocPart(part);
-    const menuSnap = await getDoc(doc(db, "menus", `${goal}_${part}`));
+const docPart = getMenuDocPart(part);
+const menuSnap = await getDoc(doc(db, "menus", `${goal}_${docPart}`));
     if (!menuSnap.exists()) {
       menuContainer.textContent = "⚠️ 查無此訓練菜單。";
       return;
