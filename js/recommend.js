@@ -141,6 +141,7 @@ async function loadMenuPreview(userName, goal, part, menuContainer) {
   menuContainer.textContent = "正在載入菜單...";
 
   try {
+    const docPart = getMenuDocPart(part);
     const menuSnap = await getDoc(doc(db, "menus", `${goal}_${part}`));
     if (!menuSnap.exists()) {
       menuContainer.textContent = "⚠️ 查無此訓練菜單。";
