@@ -10,7 +10,7 @@ function getMenuDocPart(part) {
     case "二頭肌":
       return "手部▫ 二頭肌（Biceps）";
     case "三頭肌":
-      return "三頭肌 (Triceps)";
+      return "三頭肌（Triceps）";
     default:
       return part;
   }
