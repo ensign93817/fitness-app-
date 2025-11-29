@@ -32,7 +32,7 @@ function getMenuDocPart(part) {
     case "二頭肌":
       return "手部▫ 二頭肌（Biceps）";
     case "三頭肌":
-      return "三頭肌 (Triceps)";
+      return "三頭肌（Triceps）";
     default:
       // 胸部、背部、腿部、肩部、核心：docId 是「增肌_胸部」這種，直接用中文
       return part;
