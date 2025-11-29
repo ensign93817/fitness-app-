@@ -273,7 +273,7 @@ async function displayExercises(db, userName, exercises) {
     const keepBtn = card.querySelector(".keep-btn");
     const reduceBtn = card.querySelector(".reduce-btn");
     const weightText = card.querySelector(".weight");
-    const delta = 2.5;
+    const delta = 1;
     let currentWeight = lastWeight;
 
     // ✅ 只記錄「本次訓練」的序列，真正寫入歷史放在「完成訓練」那邊
