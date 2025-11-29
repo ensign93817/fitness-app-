@@ -30,7 +30,7 @@ function makeSafeName(name) {
 function getMenuDocPart(part) {
   switch (part) {
     case "二頭肌":
-      return "手部▫ 二頭肌 (Biceps)";
+      return "手部▫ 二頭肌（Biceps）";
     case "三頭肌":
       return "三頭肌 (Triceps)";
     default:
