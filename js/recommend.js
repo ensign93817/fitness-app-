@@ -1,25 +1,23 @@
-// === 🔐 統一 safeName 規則
+// js/recommend.js
+
+// === 🔐 safeName 規則（跟 training.js 一樣） ===
 function makeSafeName(name) {
   return (name || "").replace(/[^\w一-龥ㄱ-ㅎㅏ-ㅣ]/g, "_");
 }
 
-// === 🔧 部位顯示名稱 → Firestore 菜單 doc 的實際名稱
+// === 🔧 部位顯示名稱 → Firestore 菜單 doc 的實際名稱 ===
 function getMenuDocPart(part) {
   switch (part) {
     case "二頭肌":
-      // 必須跟 Firestore menus 裡 docId 的「後半段」一模一樣
-      // 例如：增肌_手部▫ 二頭肌 (Biceps) / 力量_手部▫ 二頭肌 (Biceps)
+      // 必須跟 Firestore menus 裡的 part key 一樣
       return "手部▫ 二頭肌 (Biceps)";
     case "三頭肌":
-      // 對應：增肌_三頭肌 (Triceps) / 力量_三頭肌 (Triceps) ...
       return "三頭肌 (Triceps)";
     default:
-      // 胸部、背部、腿部、肩部、核心：docId 就是「增肌_胸部」這種，直接用 part
+      // 胸部、背部、腿部、肩部、核心：docId 就是「增肌_胸部」這種
       return part;
   }
 }
-
-
 
 // === 🔥 Firebase SDK 載入 ===
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -43,17 +41,16 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// 🔁 部位循環順序：用來決定「下一次」要練哪個部位
-// ❗ 這裡改成乾淨的中文名稱，對應 menus 裡的 docId：${goal}_${part}
+// 🔁 部位循環順序（全部用純中文）===
 const BODY_ORDER = ["胸部", "背部", "腿部", "肩部", "二頭肌", "三頭肌", "核心"];
 
 function getNextBodyPart(lastPart) {
   const idx = BODY_ORDER.indexOf(lastPart);
-  if (idx === -1) return BODY_ORDER[0];      // 找不到就從胸部開始
+  if (idx === -1) return BODY_ORDER[0];
   return BODY_ORDER[(idx + 1) % BODY_ORDER.length];
 }
 
-// 👤 初始化使用者（跟 training.js 的邏輯一樣）
+// 👤 初始化使用者（跟 training.js 一樣）
 async function initUser() {
   let userName = localStorage.getItem("userName");
 
@@ -106,7 +103,6 @@ async function loadRecommendation(userName) {
     const snap = await getDoc(doc(db, "profiles", userName));
     const data = snap.data();
 
-    // 🟢 有 lastTraining：沿用目標＋部位循環
     if (data && data.lastTraining) {
       const lastGoal = data.lastTraining.goal || "增肌";
       const lastPart = data.lastTraining.bodyPart || "胸部";
@@ -116,7 +112,6 @@ async function loadRecommendation(userName) {
       currentGoal = lastGoal;
       currentPart = nextPart;
     } else {
-      // 🔵 第一次使用：固定「增肌 + 胸部」
       lastTrainingText.textContent =
         "尚無訓練紀錄，第一次使用，本次預設為：目標 增肌、部位 胸部。";
       currentGoal = "增肌";
@@ -129,28 +124,24 @@ async function loadRecommendation(userName) {
     currentPart = "胸部";
   }
 
-  // 更新畫面上的「今天建議」
   todayGoalText.textContent = currentGoal;
   todayPartText.textContent = currentPart;
 
-  // 手動選單預設值
   manualGoal.value = currentGoal;
   manualPart.value = currentPart;
 
-  // 顯示推薦菜單
   await loadMenuPreview(userName, currentGoal, currentPart, menuContainer);
 
-  // 回傳目前選擇給其他事件使用
   return { currentGoal, currentPart };
 }
 
-// 🔹 只做「菜單預覽」：列出動作 / 組數 / 次數 / 休息 / 上次重量
+// 🔹 菜單預覽：列出動作 / 組數 / 次數 / 休息 / 上次重量
 async function loadMenuPreview(userName, goal, part, menuContainer) {
   menuContainer.textContent = "正在載入菜單...";
 
   try {
-const docPart = getMenuDocPart(part);
-const menuSnap = await getDoc(doc(db, "menus", `${goal}_${docPart}`));
+    const docPart = getMenuDocPart(part); // 轉成 Firestore 用的部位名稱
+    const menuSnap = await getDoc(doc(db, "menus", `${goal}_${docPart}`));
     if (!menuSnap.exists()) {
       menuContainer.textContent = "⚠️ 查無此訓練菜單。";
       return;
@@ -159,7 +150,6 @@ const menuSnap = await getDoc(doc(db, "menus", `${goal}_${docPart}`));
     const menuData = menuSnap.data();
     const exercises = Array.isArray(menuData.exercises) ? menuData.exercises : [];
 
-    // 讀取使用者歷史重量
     const profileSnap = await getDoc(doc(db, "profiles", userName));
     const profileData = profileSnap.data() || {};
     const historyAll = profileData.history || {};
@@ -174,9 +164,10 @@ const menuSnap = await getDoc(doc(db, "menus", `${goal}_${docPart}`));
       const safeName = makeSafeName(ex.name);
       const history = historyAll[safeName] || {};
       const dates = Object.keys(history).sort();
+      const lastDates = dates.slice(-30);
       const lastWeight =
-        dates.length > 0
-          ? history[dates[dates.length - 1]]
+        lastDates.length > 0
+          ? history[lastDates[lastDates.length - 1]]
           : (ex.defaultWeight || ex.weight || "尚無紀錄");
 
       const div = document.createElement("div");
@@ -204,15 +195,13 @@ window.addEventListener("DOMContentLoaded", async () => {
   const manualArea = document.getElementById("manualArea");
   const manualGoal = document.getElementById("manualGoal");
   const manualPart = document.getElementById("manualPart");
-  const applyManualBtn = document.getElementById("applyManualBtn");
   const todayGoalText = document.getElementById("todayGoalText");
   const todayPartText = document.getElementById("todayPartText");
   const menuContainer = document.getElementById("menuContainer");
 
-  // 先載入推薦
   let { currentGoal, currentPart } = await loadRecommendation(userName);
 
-  // ✅ 接受推薦 → 直接帶目標/部位進訓練紀錄頁
+  // ✅ 接受推薦 → 直接帶參數進 training.html
   acceptBtn.addEventListener("click", () => {
     localStorage.setItem("lastGoal", currentGoal);
     localStorage.setItem("lastPart", currentPart);
@@ -222,12 +211,12 @@ window.addEventListener("DOMContentLoaded", async () => {
     window.location.href = url;
   });
 
-  // ✏️ 我想自己選 → 展開手動設定區塊（留在今日推薦頁）
+  // ✏️ 展開手動設定區塊
   manualBtn.addEventListener("click", () => {
     manualArea.style.display = manualArea.style.display === "none" ? "block" : "none";
   });
 
-  // 重新套用手動條件 → 更新今天建議 + 菜單預覽，但人還在今日推薦頁
+  // 手動重新套用條件（還在今日推薦頁，只是更新預覽）
   applyManualBtn.addEventListener("click", async () => {
     currentGoal = manualGoal.value;
     currentPart = manualPart.value;
