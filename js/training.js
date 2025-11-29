@@ -246,45 +246,46 @@ const lastWeight = weights.at(-1) || ex.defaultWeight || ex.weight || 10;
     `;
     container.appendChild(card);
 
-    const addBtn = card.querySelector(".add-btn");
-    const keepBtn = card.querySelector(".keep-btn");
-    const reduceBtn = card.querySelector(".reduce-btn");
-    const weightText = card.querySelector(".weight");
-    const delta = 2.5;
-    let currentWeight = lastWeight;
+const addBtn = card.querySelector(".add-btn");
+const keepBtn = card.querySelector(".keep-btn");
+const reduceBtn = card.querySelector(".reduce-btn");
+const weightText = card.querySelector(".weight");
+const delta = 2.5;
+let currentWeight = lastWeight;
 
-    // ✅ 只記錄「本次訓練」的序列，真正寫入歷史放在「完成訓練」那邊
-    function saveWeightChange(newWeight) {
-      if (!sessionSeries[safeName]) {
-        sessionSeries[safeName] = {
-          name: ex.name,
-          weights: []
-        };
-      }
-      if (sessionSeries[safeName].weights.length < 30) {
-        sessionSeries[safeName].weights.push(newWeight);
-      }
-    
-  // 🔵 額外：即時更新當前這個動作的圖表（只動前端，不寫 Firestore）
-  const chartObj = charts.find(c => c.safeName === safeName);
-  if (chartObj) {
-    const ch = chartObj.chart;
-    ch.data.labels.push(`第 ${ch.data.labels.length + 1} 次`);
-    ch.data.datasets[0].data.push(newWeight);
-    ch.update();
+// ✅ 只記錄「本次訓練」的序列，真正寫入歷史放在「完成訓練」那邊
+function saveWeightChange(newWeight) {
+  if (!sessionSeries[safeName]) {
+    sessionSeries[safeName] = {
+      name: ex.name,
+      weights: []
+    };
+  }
+  if (sessionSeries[safeName].weights.length < 30) {
+    sessionSeries[safeName].weights.push(newWeight);
   }
 }
 
-    keepBtn.addEventListener("click", () => {
-      alert(`💪 維持重量 ${currentWeight.toFixed(1)} kg`);
-      saveWeightChange(currentWeight);
-    });
+// 🔼 加重
+addBtn.addEventListener("click", () => {
+  currentWeight += delta;
+  weightText.textContent = `目前重量：${currentWeight.toFixed(1)} kg`;
+  saveWeightChange(currentWeight);
+});
 
-    reduceBtn.addEventListener("click", () => {
-      currentWeight = Math.max(0, currentWeight - delta);
-      weightText.textContent = `目前重量：${currentWeight.toFixed(1)} kg`;
-      saveWeightChange(currentWeight);
-    });
+// ➖ 維持
+keepBtn.addEventListener("click", () => {
+  alert(`💪 維持重量 ${currentWeight.toFixed(1)} kg`);
+  saveWeightChange(currentWeight);
+});
+
+// 🔽 減重
+reduceBtn.addEventListener("click", () => {
+  currentWeight = Math.max(0, currentWeight - delta);
+  weightText.textContent = `目前重量：${currentWeight.toFixed(1)} kg`;
+  saveWeightChange(currentWeight);
+});
+
 
     const ctx = document.getElementById(`chart-${i}`);
     const chart = new Chart(ctx, {
@@ -306,25 +307,6 @@ const lastWeight = weights.at(-1) || ex.defaultWeight || ex.weight || 10;
         scales: { y: { beginAtZero: true } },
       },
     });
-
-    // 這段是去抓 Firebase 歷史更新圖表，保留即可
-    setInterval(async () => {
-      try {
-        const snap = await getDoc(userRef);
-        const data = snap.data();
-        const historyNow = data?.history?.[safeName] || {};
-        const sortedDates = Object.keys(historyNow).sort();
-        const newWeights = sortedDates.map(d => historyNow[d]);
-
-        if (JSON.stringify(newWeights) !== JSON.stringify(chart.data.datasets[0].data)) {
-          chart.data.labels = sortedDates;
-          chart.data.datasets[0].data = newWeights;
-          chart.update();
-        }
-      } catch (e) {
-        console.warn("⚠️ 更新圖表失敗：", safeName, e);
-      }
-    }, 1000);
 
     charts.push({ safeName, chart });
   }
