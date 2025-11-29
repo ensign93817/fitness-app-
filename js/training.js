@@ -4,13 +4,15 @@ function localISODateTime() {
   d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
   return d.toISOString().slice(0, 19).replace("T", " ");
 }
+
 // === 🕓 向下相容：只取日期 (YYYY-MM-DD) ===
 function localISODate() {
   const d = new Date();
   d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
   return d.toISOString().slice(0, 10);
 }
-// ✅ 把時間「壓」成 30 秒一格
+
+// ✅ 把時間「壓」成 30 秒一格（現在只給舊資料用，新的 key 用 localISODateTime）
 function localISODateTime30s() {
   const d = new Date();
   d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
@@ -28,13 +30,17 @@ function makeSafeName(name) {
 function getMenuDocPart(part) {
   switch (part) {
     case "二頭肌":
+      // 對應 Firestore: 增肌_手部▫ 二頭肌 (Biceps)、力量_手部▫ 二頭肌 (Biceps) ...
       return "手部▫ 二頭肌 (Biceps)";
     case "三頭肌":
+      // 對應 Firestore: 增肌_三頭肌 (Triceps)、力量_三頭肌 (Triceps) ...
       return "三頭肌 (Triceps)";
     default:
+      // 胸部、背部、腿部、肩部、核心：docId 是「增肌_胸部」這種，直接用中文
       return part;
   }
 }
+
 // === 🔥 Firebase SDK 載入 ===
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import {
@@ -53,7 +59,7 @@ const firebaseConfig = {
   storageBucket: "fitness-guide-9a8f3.firebasestorage.app",
   messagingSenderId: "969288112649",
   appId: "1:969288112649:web:58b5b807c410388b1836d8",
-  measurementId: "G-7X1L324K0Q"
+  measurementId: "G-7X1L324K0Q",
 };
 
 const app = initializeApp(firebaseConfig);
@@ -62,6 +68,8 @@ const db = getFirestore(app);
 // 🔴 當次訓練的重量序列（只存本次，用來給 feedback.html 畫圖）
 // 結構：sessionSeries[safeName] = { name, weights: [w1, w2, ...] }
 const sessionSeries = {};
+// 前端折線圖列表，用 safeName 找對應圖表
+window.charts = [];
 
 // === 👤 初始化使用者 ===
 async function initUser() {
@@ -137,7 +145,9 @@ async function showLastTraining() {
 // === 📦 載入菜單 ===
 async function loadMenu(db, userName) {
   const goal = document.getElementById("goalSelect").value;
-  const part = document.getElementById("partSelect").value;
+  const rawPart = document.getElementById("partSelect").value; // 下拉選單的「中文部位」
+  const part = getMenuDocPart(rawPart);                       // Firestore 用的部位字串
+
   const loadBtn = document.getElementById("loadBtn");
   const container = document.getElementById("exerciseContainer");
 
@@ -146,8 +156,9 @@ async function loadMenu(db, userName) {
     return;
   }
 
+  // ⭐ lastPart 存「中文部位」，給推薦頁跟回顧頁用
   localStorage.setItem("lastGoal", goal);
-  localStorage.setItem("lastPart", part);
+  localStorage.setItem("lastPart", rawPart);
 
   loadBtn.disabled = true;
   loadBtn.textContent = "⏳ 載入中...";
@@ -187,12 +198,13 @@ async function loadMenu(db, userName) {
     loadBtn.textContent = "載入菜單";
   }
 }
+
 // 🔎 兼容舊版 safeName：讀歷史時同時嘗試舊的 key
 function getHistoryForExercise(userData, exerciseName) {
   const allHistory = userData.history || {};
-  const keyNew   = makeSafeName(exerciseName);
-  const keyOld1  = (exerciseName || "").replace(/[\/\[\]#$.()\s（）]/g, "_");
-  const keyOld2  = (exerciseName || "").replace(/[^\wㄱ-ㅎㅏ-ㅣ가-힣一-龥]/g, "_");
+  const keyNew  = makeSafeName(exerciseName);
+  const keyOld1 = (exerciseName || "").replace(/[\/\[\]#$.()\s（）]/g, "_");
+  const keyOld2 = (exerciseName || "").replace(/[^\wㄱ-ㅎㅏ-ㅣ가-힣一-龥]/g, "_");
 
   if (allHistory[keyNew])  return allHistory[keyNew];
   if (allHistory[keyOld1]) return allHistory[keyOld1];
@@ -222,11 +234,11 @@ async function displayExercises(db, userName, exercises) {
   for (let i = 0; i < uniqueExercises.length; i++) {
     const ex = uniqueExercises[i];
     const safeName = makeSafeName(ex.name);
-const history = getHistoryForExercise(userData, ex.name);
-const dates = Object.keys(history).sort();
-const weights = dates.map(d => history[d]);
-const lastWeight = weights.at(-1) || ex.defaultWeight || ex.weight || 10;
 
+    const history = getHistoryForExercise(userData, ex.name);
+    const dates = Object.keys(history).sort();
+    const weights = dates.map(d => history[d]);
+    const lastWeight = weights.at(-1) || ex.defaultWeight || ex.weight || 10;
 
     // 初始化當次 sessionSeries 結構（先不塞 weights，在按鈕 / 完成時處理）
     if (!sessionSeries[safeName]) {
@@ -257,46 +269,54 @@ const lastWeight = weights.at(-1) || ex.defaultWeight || ex.weight || 10;
     `;
     container.appendChild(card);
 
-const addBtn = card.querySelector(".add-btn");
-const keepBtn = card.querySelector(".keep-btn");
-const reduceBtn = card.querySelector(".reduce-btn");
-const weightText = card.querySelector(".weight");
-const delta = 2.5;
-let currentWeight = lastWeight;
+    const addBtn = card.querySelector(".add-btn");
+    const keepBtn = card.querySelector(".keep-btn");
+    const reduceBtn = card.querySelector(".reduce-btn");
+    const weightText = card.querySelector(".weight");
+    const delta = 2.5;
+    let currentWeight = lastWeight;
 
-// ✅ 只記錄「本次訓練」的序列，真正寫入歷史放在「完成訓練」那邊
-function saveWeightChange(newWeight) {
-  if (!sessionSeries[safeName]) {
-    sessionSeries[safeName] = {
-      name: ex.name,
-      weights: []
-    };
-  }
-  if (sessionSeries[safeName].weights.length < 30) {
-    sessionSeries[safeName].weights.push(newWeight);
-  }
-}
+    // ✅ 只記錄「本次訓練」的序列，真正寫入歷史放在「完成訓練」那邊
+    function saveWeightChange(newWeight) {
+      if (!sessionSeries[safeName]) {
+        sessionSeries[safeName] = {
+          name: ex.name,
+          weights: []
+        };
+      }
+      if (sessionSeries[safeName].weights.length < 30) {
+        sessionSeries[safeName].weights.push(newWeight);
+      }
 
-// 🔼 加重
-addBtn.addEventListener("click", () => {
-  currentWeight += delta;
-  weightText.textContent = `目前重量：${currentWeight.toFixed(1)} kg`;
-  saveWeightChange(currentWeight);
-});
+      // 🔵 即時更新前端這個動作的折線圖（只動畫面，不寫 Firestore）
+      const chartObj = (window.charts || []).find(c => c.safeName === safeName);
+      if (chartObj) {
+        const ch = chartObj.chart;
+        ch.data.labels.push(`第 ${ch.data.labels.length + 1} 次`);
+        ch.data.datasets[0].data.push(newWeight);
+        ch.update();
+      }
+    }
 
-// ➖ 維持
-keepBtn.addEventListener("click", () => {
-  alert(`💪 維持重量 ${currentWeight.toFixed(1)} kg`);
-  saveWeightChange(currentWeight);
-});
+    // 🔼 加重
+    addBtn.addEventListener("click", () => {
+      currentWeight += delta;
+      weightText.textContent = `目前重量：${currentWeight.toFixed(1)} kg`;
+      saveWeightChange(currentWeight);
+    });
 
-// 🔽 減重
-reduceBtn.addEventListener("click", () => {
-  currentWeight = Math.max(0, currentWeight - delta);
-  weightText.textContent = `目前重量：${currentWeight.toFixed(1)} kg`;
-  saveWeightChange(currentWeight);
-});
+    // ➖ 維持
+    keepBtn.addEventListener("click", () => {
+      alert(`💪 維持重量 ${currentWeight.toFixed(1)} kg`);
+      saveWeightChange(currentWeight);
+    });
 
+    // 🔽 減重
+    reduceBtn.addEventListener("click", () => {
+      currentWeight = Math.max(0, currentWeight - delta);
+      weightText.textContent = `目前重量：${currentWeight.toFixed(1)} kg`;
+      saveWeightChange(currentWeight);
+    });
 
     const ctx = document.getElementById(`chart-${i}`);
     const chart = new Chart(ctx, {
@@ -319,7 +339,7 @@ reduceBtn.addEventListener("click", () => {
       },
     });
 
-    charts.push({ safeName, chart });
+    window.charts.push({ safeName, chart });
   }
 
   if (document.getElementById("completeTrainingBtn")) return;
@@ -347,7 +367,8 @@ reduceBtn.addEventListener("click", () => {
       const weightStr = card.querySelector(".weight").textContent;
       const weight = parseFloat(weightStr.replace(/[^\d.]/g, "")) || 0;
 
-      const slot = localISODateTime30s();
+      // ⭐ 每次完成訓練 → 新的時間 key（秒數不同就會多一筆）
+      const slot = localISODateTime();
       updates[`history.${safeName}.${slot}`] = weight;
       total += weight;
 
@@ -372,14 +393,14 @@ reduceBtn.addEventListener("click", () => {
       }
 
       const goal = localStorage.getItem("lastGoal");
-      const part = localStorage.getItem("lastPart");
+      const bodyPart = localStorage.getItem("lastPart"); // 中文部位
 
       await setDoc(
         userRef,
         {
           lastTraining: {
             goal,
-            bodyPart: part,
+            bodyPart,
             date: today,
           },
         },
@@ -390,7 +411,7 @@ reduceBtn.addEventListener("click", () => {
       const feedbackPayload = {
         date: today,
         goal,
-        bodyPart: part,
+        bodyPart,
         sessionSeries,   // { safeName: { name, weights: [...] }, ... }
         totalWeight: total
       };
@@ -430,7 +451,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   // 若從 recommend.html 帶參數過來，直接載入推薦菜單
   if (goal && part && goalSelect && partSelect) {
     goalSelect.value = goal;
-    partSelect.value = part;
+    partSelect.value = part;   // 保持顯示中文
     await loadMenu(db, userName);
   }
 
