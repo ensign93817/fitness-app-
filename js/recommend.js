@@ -7,16 +7,18 @@ function makeSafeName(name) {
 function getMenuDocPart(part) {
   switch (part) {
     case "二頭肌":
-      // ✅ 這個字串要跟 Firestore「menus」裡看到的 doc ID 完全一樣
-      //   增肌_手部-二頭肌 (Biceps)
-      return "手部▫ 二頭肌（Biceps）";
+      // 必須跟 Firestore menus 裡 docId 的「後半段」一模一樣
+      // 例如：增肌_手部▫ 二頭肌 (Biceps) / 力量_手部▫ 二頭肌 (Biceps)
+      return "手部▫ 二頭肌 (Biceps)";
     case "三頭肌":
-      // 減脂_三頭肌(Triceps)、增肌_三頭肌(Triceps) → doc ID 形式一樣
-      return "三頭肌(Triceps)";
+      // 對應：增肌_三頭肌 (Triceps) / 力量_三頭肌 (Triceps) ...
+      return "三頭肌 (Triceps)";
     default:
-      return part; // 其他（胸部、背部、腿部、肩部、核心）一律直接用
+      // 胸部、背部、腿部、肩部、核心：docId 就是「增肌_胸部」這種，直接用 part
+      return part;
   }
 }
+
 
 
 // === 🔥 Firebase SDK 載入 ===
