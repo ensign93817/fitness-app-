@@ -1,3 +1,5 @@
+// js/training.js
+
 // === 🕓 取得本地時間 (YYYY-MM-DD HH:mm:ss) ===
 function localISODateTime() {
   const d = new Date();
@@ -12,7 +14,7 @@ function localISODate() {
   return d.toISOString().slice(0, 10);
 }
 
-// ✅ 把時間「壓」成 30 秒一格（現在只給舊資料用，新的 key 用 localISODateTime）
+// ✅ 舊資料用的 30 秒一格（現在新資料不用這個 key，純相容）
 function localISODateTime30s() {
   const d = new Date();
   d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
@@ -30,13 +32,10 @@ function makeSafeName(name) {
 function getMenuDocPart(part) {
   switch (part) {
     case "二頭肌":
-      // 對應 Firestore: 增肌_手部▫ 二頭肌 (Biceps)、力量_手部▫ 二頭肌 (Biceps) ...
       return "手部▫ 二頭肌 (Biceps)";
     case "三頭肌":
-      // 對應 Firestore: 增肌_三頭肌 (Triceps)、力量_三頭肌 (Triceps) ...
       return "三頭肌 (Triceps)";
     default:
-      // 胸部、背部、腿部、肩部、核心：docId 是「增肌_胸部」這種，直接用中文
       return part;
   }
 }
@@ -65,10 +64,8 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// 🔴 當次訓練的重量序列（只存本次，用來給 feedback.html 畫圖）
-// 結構：sessionSeries[safeName] = { name, weights: [w1, w2, ...] }
+// 🔴 當次訓練的重量序列（只存本次，用來即時畫圖；不再給回顧頁用）
 const sessionSeries = {};
-// 前端折線圖列表，用 safeName 找對應圖表
 window.charts = [];
 
 // === 👤 初始化使用者 ===
@@ -142,11 +139,25 @@ async function showLastTraining() {
   }
 }
 
+// 🔎 兼容舊版 safeName：讀歷史時同時嘗試舊的 key
+function getHistoryForExercise(userData, exerciseName) {
+  const allHistory = userData.history || {};
+  const keyNew  = makeSafeName(exerciseName);
+  const keyOld1 = (exerciseName || "").replace(/[\/\[\]#$.()\s（）]/g, "_");
+  const keyOld2 = (exerciseName || "").replace(/[^\wㄱ-ㅎㅏ-ㅣ가-힣一-龥]/g, "_");
+
+  if (allHistory[keyNew])  return allHistory[keyNew];
+  if (allHistory[keyOld1]) return allHistory[keyOld1];
+  if (allHistory[keyOld2]) return allHistory[keyOld2];
+
+  return {};
+}
+
 // === 📦 載入菜單 ===
 async function loadMenu(db, userName) {
   const goal = document.getElementById("goalSelect").value;
-  const rawPart = document.getElementById("partSelect").value; // 下拉選單的「中文部位」
-  const part = getMenuDocPart(rawPart);                       // Firestore 用的部位字串
+  const rawPart = document.getElementById("partSelect").value;
+  const part = getMenuDocPart(rawPart);
 
   const loadBtn = document.getElementById("loadBtn");
   const container = document.getElementById("exerciseContainer");
@@ -156,7 +167,7 @@ async function loadMenu(db, userName) {
     return;
   }
 
-  // ⭐ lastPart 存「中文部位」，給推薦頁跟回顧頁用
+  // lastPart 存「中文部位」
   localStorage.setItem("lastGoal", goal);
   localStorage.setItem("lastPart", rawPart);
 
@@ -199,20 +210,6 @@ async function loadMenu(db, userName) {
   }
 }
 
-// 🔎 兼容舊版 safeName：讀歷史時同時嘗試舊的 key
-function getHistoryForExercise(userData, exerciseName) {
-  const allHistory = userData.history || {};
-  const keyNew  = makeSafeName(exerciseName);
-  const keyOld1 = (exerciseName || "").replace(/[\/\[\]#$.()\s（）]/g, "_");
-  const keyOld2 = (exerciseName || "").replace(/[^\wㄱ-ㅎㅏ-ㅣ가-힣一-龥]/g, "_");
-
-  if (allHistory[keyNew])  return allHistory[keyNew];
-  if (allHistory[keyOld1]) return allHistory[keyOld1];
-  if (allHistory[keyOld2]) return allHistory[keyOld2];
-
-  return {}; // 找不到就回傳空物件
-}
-
 // === 🏋️‍♀️ 顯示訓練動作 ===
 async function displayExercises(db, userName, exercises) {
   const container = document.getElementById("exerciseContainer");
@@ -235,19 +232,19 @@ async function displayExercises(db, userName, exercises) {
     const ex = uniqueExercises[i];
     const safeName = makeSafeName(ex.name);
 
-    const history = getHistoryForExercise(userData, ex.name);
-    const dates = Object.keys(history).sort();
-    const weights = dates.map(d => history[d]);
+    const historyObj = getHistoryForExercise(userData, ex.name);
+    const allDates = Object.keys(historyObj).sort();
+    const dates = allDates.slice(-30); // ✅ 只取最近 30 筆
+    const weights = dates.map(d => historyObj[d]);
     const lastWeight = weights.at(-1) || ex.defaultWeight || ex.weight || 10;
 
-    // 初始化當次 sessionSeries 結構（先不塞 weights，在按鈕 / 完成時處理）
     if (!sessionSeries[safeName]) {
       sessionSeries[safeName] = { name: ex.name, weights: [] };
     }
 
     const card = document.createElement("div");
     card.className = "card p-3 mb-3 shadow-sm";
-    card.dataset.safeName = safeName; // ✅ 之後完成訓練好取得 safeName
+    card.dataset.safeName = safeName;
     card.dataset.exerciseName = ex.name;
 
     card.innerHTML = `
@@ -273,45 +270,45 @@ async function displayExercises(db, userName, exercises) {
     const keepBtn = card.querySelector(".keep-btn");
     const reduceBtn = card.querySelector(".reduce-btn");
     const weightText = card.querySelector(".weight");
-    const delta = 1;
+    const delta = 2.5;
     let currentWeight = lastWeight;
 
-    // ✅ 只記錄「本次訓練」的序列，真正寫入歷史放在「完成訓練」那邊
     function saveWeightChange(newWeight) {
       if (!sessionSeries[safeName]) {
-        sessionSeries[safeName] = {
-          name: ex.name,
-          weights: []
-        };
-      }
-      if (sessionSeries[safeName].weights.length < 30) {
-        sessionSeries[safeName].weights.push(newWeight);
+        sessionSeries[safeName] = { name: ex.name, weights: [] };
       }
 
-      // 🔵 即時更新前端這個動作的折線圖（只動畫面，不寫 Firestore）
+      // session 裡最多 30 筆
+      if (sessionSeries[safeName].weights.length >= 30) {
+        sessionSeries[safeName].weights.shift();
+      }
+      sessionSeries[safeName].weights.push(newWeight);
+
+      // 即時更新圖表（只更新畫面，不寫 Firestore）
       const chartObj = (window.charts || []).find(c => c.safeName === safeName);
       if (chartObj) {
         const ch = chartObj.chart;
+        if (ch.data.labels.length >= 30) {
+          ch.data.labels.shift();
+          ch.data.datasets[0].data.shift();
+        }
         ch.data.labels.push(`第 ${ch.data.labels.length + 1} 次`);
         ch.data.datasets[0].data.push(newWeight);
         ch.update();
       }
     }
 
-    // 🔼 加重
     addBtn.addEventListener("click", () => {
       currentWeight += delta;
       weightText.textContent = `目前重量：${currentWeight.toFixed(1)} kg`;
       saveWeightChange(currentWeight);
     });
 
-    // ➖ 維持
     keepBtn.addEventListener("click", () => {
       alert(`💪 維持重量 ${currentWeight.toFixed(1)} kg`);
       saveWeightChange(currentWeight);
     });
 
-    // 🔽 減重
     reduceBtn.addEventListener("click", () => {
       currentWeight = Math.max(0, currentWeight - delta);
       weightText.textContent = `目前重量：${currentWeight.toFixed(1)} kg`;
@@ -348,37 +345,38 @@ async function displayExercises(db, userName, exercises) {
   completeBtn.id = "completeTrainingBtn";
   completeBtn.className = "btn btn-success";
   completeBtn.textContent = "✅ 完成訓練";
-  completeBtn.style = "display:block;margin:30px auto;padding:10px 20px;font-size:18px;";
+  completeBtn.style =
+    "display:block;margin:30px auto;padding:10px 20px;font-size:18px;";
   container.insertAdjacentElement("afterend", completeBtn);
 
-  // === ✅ 完成訓練事件 ===
+  // === ✅ 完成訓練：只在這裡寫 Firestore，一個動作一筆 ===
   completeBtn.addEventListener("click", async () => {
     const today = localISODate();
     const cards = document.querySelectorAll("#exerciseContainer .card");
     let total = 0;
     const updates = {};
+    const exerciseNamesUpdate = {};
 
-    // 💡 1. 先從畫面抓出每個動作的最終重量（有沒有按按鈕都抓得到）
     for (const card of cards) {
       const nameText = card.dataset.exerciseName || card.querySelector("h4").textContent;
-      const pureName = nameText.replace(/^\d+\.\s*/, ""); // 去掉「1. 」
+      const pureName = nameText.replace(/^\d+\.\s*/, "");
       const safeName = makeSafeName(pureName);
 
       const weightStr = card.querySelector(".weight").textContent;
       const weight = parseFloat(weightStr.replace(/[^\d.]/g, "")) || 0;
 
-      // ⭐ 每次完成訓練 → 新的時間 key（秒數不同就會多一筆）
       const slot = localISODateTime();
       updates[`history.${safeName}.${slot}`] = weight;
       total += weight;
 
-      // 💡 2. 確保 sessionSeries 也有一筆（沒按按鈕也會有圖）
+      exerciseNamesUpdate[`exerciseNames.${safeName}`] = pureName;
+
       if (!sessionSeries[safeName]) {
-        sessionSeries[safeName] = {
-          name: pureName,
-          weights: [weight]
-        };
-      } else if (!sessionSeries[safeName].weights || sessionSeries[safeName].weights.length === 0) {
+        sessionSeries[safeName] = { name: pureName, weights: [weight] };
+      } else if (
+        !sessionSeries[safeName].weights ||
+        sessionSeries[safeName].weights.length === 0
+      ) {
         sessionSeries[safeName].weights = [weight];
       }
     }
@@ -391,9 +389,12 @@ async function displayExercises(db, userName, exercises) {
       for (const [k, v] of Object.entries(updates)) {
         await updateDoc(userRef, { [k]: v });
       }
+      for (const [k, v] of Object.entries(exerciseNamesUpdate)) {
+        await updateDoc(userRef, { [k]: v });
+      }
 
       const goal = localStorage.getItem("lastGoal");
-      const bodyPart = localStorage.getItem("lastPart"); // 中文部位
+      const bodyPart = localStorage.getItem("lastPart");
 
       await setDoc(
         userRef,
@@ -407,16 +408,6 @@ async function displayExercises(db, userName, exercises) {
         { merge: true }
       );
 
-      // 🔴 把「當次訓練的重量序列」存到 localStorage，給 feedback.html 用
-      const feedbackPayload = {
-        date: today,
-        goal,
-        bodyPart,
-        sessionSeries,   // { safeName: { name, weights: [...] }, ... }
-        totalWeight: total
-      };
-      localStorage.setItem("lastFeedbackData", JSON.stringify(feedbackPayload));
-
       completeBtn.disabled = true;
       completeBtn.textContent = `✅ 已完成訓練！總重量 ${total.toFixed(1)} kg 已儲存`;
       completeBtn.style.backgroundColor = "#28a745";
@@ -425,7 +416,6 @@ async function displayExercises(db, userName, exercises) {
 
       await showLastTraining();
 
-      // 🔴 導向訓後回顧頁面
       window.location.href = "feedback.html";
     } catch (e) {
       console.warn("❌ 完成訓練寫入失敗：", e);
@@ -433,7 +423,7 @@ async function displayExercises(db, userName, exercises) {
   });
 }
 
-// === 🚀 頁面啟動（含：若有 ?goal & ?part 就自動載入菜單） ===
+// === 🚀 頁面啟動 ===
 window.addEventListener("DOMContentLoaded", async () => {
   const userName = await initUser();
   if (!userName) return;
@@ -448,10 +438,9 @@ window.addEventListener("DOMContentLoaded", async () => {
   const goal = params.get("goal");
   const part = params.get("part");
 
-  // 若從 recommend.html 帶參數過來，直接載入推薦菜單
   if (goal && part && goalSelect && partSelect) {
     goalSelect.value = goal;
-    partSelect.value = part;   // 保持顯示中文
+    partSelect.value = part; // 這裡的 part 是「二頭肌」之類的純中文
     await loadMenu(db, userName);
   }
 
