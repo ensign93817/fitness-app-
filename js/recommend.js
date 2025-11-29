@@ -10,9 +10,9 @@ function getMenuDocPart(part) {
   switch (part) {
     case "二頭肌":
       // 必須跟 Firestore menus 裡的 part key 一樣
-      return "手部▫ 二頭肌 (Biceps) ";
+      return "手部▫ 二頭肌（Biceps）";
     case "三頭肌":
-      return "三頭肌 (Triceps) ";
+      return "三頭肌（Triceps）";
     default:
       // 胸部、背部、腿部、肩部、核心：docId 就是「增肌_胸部」這種
       return part;
