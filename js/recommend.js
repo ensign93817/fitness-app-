@@ -5,7 +5,6 @@ function makeSafeName(name) {
   return (name || "").replace(/[^\w一-龥ㄱ-ㅎㅏ-ㅣ]/g, "_");
 }
 
-
 function getMenuDocPart(part) {
   switch (part) {
     case "二頭肌":
