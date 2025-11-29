@@ -30,13 +30,11 @@ function makeSafeName(name) {
 function getMenuDocPart(part) {
   switch (part) {
     case "二頭肌":
-      // Firestore: 增肌_手部▫ 二頭肌 (Biceps)、力量_手部▫ 二頭肌 (Biceps)
-      return "手部▫ 二頭肌（Biceps）";
+      return "手部▫ 二頭肌 (Biceps)";
     case "三頭肌":
-      // Firestore: 增肌_三頭肌 (Triceps)、力量_三頭肌 (Triceps)
-      return "三頭肌（Triceps）";
+      return "三頭肌 (Triceps)";
     default:
-      // 胸部、背部、腿部、肩部、核心：docId = `${goal}_${part}`
+      // 胸部、背部、腿部、肩部、核心：docId 是「增肌_胸部」這種，直接用中文
       return part;
   }
 }
