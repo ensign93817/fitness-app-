@@ -1,115 +1,166 @@
 // js/feedback.js
-// 只顯示「當次訓練」的回顧圖表與鼓勵文字
 
-function buildComment(weights) {
-  if (!weights || weights.length === 0) {
-    return "今天這個動作還沒有重量紀錄，可以回到訓練紀錄頁面，做完覺得太輕鬆 / 剛剛好 / 太吃力時按一下按鈕試試看。";
-  }
-  if (weights.length === 1) {
-    return "已經留下第一筆紀錄了！多累積幾次之後，會很清楚看到自己的進步軌跡。💪";
-  }
-
-  const first = weights[0];
-  const last = weights[weights.length - 1];
-
-  if (first === 0) {
-    return "已經有一些紀錄囉，持續穩定訓練最重要，今天辛苦了！";
-  }
-
-  const ratio = (last - first) / first;
-
-  if (ratio > 0.05) {
-    return "這次的重量比一開始高不少，漸進超負荷做得很棒，持續維持這個節奏！🔥";
-  } else if (ratio > -0.05) {
-    return "重量大致維持在同一個區間，代表訓練穩定，之後可以依照感受再微調重量。👍";
-  } else {
-    return "這次的重量稍微比一開始低一點，可能是在調整動作或身體比較疲勞，記得好好休息、補水，下次再衝就好！💪";
-  }
+// === 🕓 只取日期 (YYYY-MM-DD) ===
+function localISODate() {
+  const d = new Date();
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+  return d.toISOString().slice(0, 10);
 }
 
-window.addEventListener("DOMContentLoaded", () => {
+// 🔐 跟 training.js 一樣的 safeName
+function makeSafeName(name) {
+  return (name || "").replace(/[^\w一-龥ㄱ-ㅎㅏ-ㅣ]/g, "_");
+}
+
+// 🔍 跟 training.js 一樣：為了兼容舊 key，同一個動作試 3 組 key
+function getHistoryForExercise(userData, exerciseName) {
+  const allHistory = userData.history || {};
+  const keyNew  = makeSafeName(exerciseName);
+  const keyOld1 = (exerciseName || "").replace(/[\/\[\]#$.()\s（）]/g, "_");
+  const keyOld2 = (exerciseName || "").replace(/[^\wㄱ-ㅎㅏ-ㅣ가-힣一-龥]/g, "_");
+
+  if (allHistory[keyNew])  return allHistory[keyNew];
+  if (allHistory[keyOld1]) return allHistory[keyOld1];
+  if (allHistory[keyOld2]) return allHistory[keyOld2];
+
+  return {}; // 找不到就回傳空物件
+}
+
+// === 🔥 Firebase SDK 載入 ===
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import {
+  getFirestore,
+  doc,
+  getDoc,
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+// === ⚙️ Firebase 初始化設定 ===
+const firebaseConfig = {
+  apiKey: "AIzaSyBur0DoRPT0csPqtyDSOQBYMjlGaqf3EB0",
+  authDomain: "fitness-guide-9a8f3.firebaseapp.com",
+  projectId: "fitness-guide-9a8f3",
+  storageBucket: "fitness-guide-9a8f3.firebasestorage.app",
+  messagingSenderId: "969288112649",
+  appId: "1:969288112649:web:58b5b807c410388b1836d8",
+  measurementId: "G-7X1L324K0Q",
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// === 🚀 頁面啟動 ===
+window.addEventListener("DOMContentLoaded", async () => {
+  // 1️⃣ 讀使用者
+  const userName = localStorage.getItem("userName") || "guestUser";
+  const userNameText = document.getElementById("userNameText");
+  if (userNameText) userNameText.textContent = userName;
+
+  // 2️⃣ 讀 training.js 存的最後一次訓練摘要
   const raw = localStorage.getItem("lastFeedbackData");
+  const summaryText = document.getElementById("summaryText");
+  const totalWeightText = document.getElementById("totalWeightText");
+  const container = document.getElementById("feedbackContainer");
 
   if (!raw) {
-    const container = document.getElementById("feedbackContainer");
-    if (container) {
-      container.innerHTML = "<p>❌ 找不到當次訓練資料，請先在「訓練紀錄」頁完成一次訓練，再回來查看訓後回顧。</p>";
-    }
+    if (summaryText) summaryText.textContent = "尚未找到最近一次訓練資料。";
+    if (container) container.textContent = "請先到「訓練紀錄」頁完成一次訓練。";
     return;
   }
 
-  let data;
+  let feedback;
   try {
-    data = JSON.parse(raw);
+    feedback = JSON.parse(raw);
   } catch (e) {
-    console.error("解析 lastFeedbackData 失敗：", e);
-    const container = document.getElementById("feedbackContainer");
-    if (container) {
-      container.innerHTML = "<p>❌ 回顧資料格式錯誤，請重新完成一次訓練。</p>";
-    }
+    console.error("lastFeedbackData 解析失敗：", e);
+    if (summaryText) summaryText.textContent = "最近一次訓練資料已損壞。";
     return;
   }
 
-  const userName = localStorage.getItem("userName") || "未命名使用者";
-
-  const dateText        = document.getElementById("dateText");
-  const goalText        = document.getElementById("goalText");
-  const partText        = document.getElementById("partText");
-  const totalWeightText = document.getElementById("totalWeightText");
-  const summaryUser     = document.getElementById("summaryUser");
-
-  if (summaryUser) summaryUser.textContent = userName;
-  if (dateText)  dateText.textContent  = data.date  || "（未記錄）";
-  if (goalText)  goalText.textContent  = data.goal  || "-";
-  if (partText)  partText.textContent  = data.bodyPart || "-";
-  if (totalWeightText && typeof data.totalWeight === "number") {
-    totalWeightText.textContent = data.totalWeight.toFixed(1) + " kg";
+  const { date, goal, bodyPart, sessionSeries, totalWeight } = feedback || {};
+  if (summaryText) {
+    const d = date || localISODate();
+    summaryText.textContent = `日期：${d}，目標：${goal || "—"}，部位：${bodyPart || "—"}`;
+  }
+  if (totalWeightText && typeof totalWeight === "number") {
+    totalWeightText.textContent = totalWeight.toFixed(1) + " kg";
   }
 
-  const container = document.getElementById("feedbackContainer");
+  const seriesArray = Object.values(sessionSeries || {});
+  if (!seriesArray.length) {
+    if (container) container.textContent = "本次訓練沒有任何動作資料。";
+    return;
+  }
+
+  // 3️⃣ 從 Firestore 把 history 抓出來（每次按「完成訓練」寫進去的 1 筆）
+  let userData = {};
+  try {
+    const userRef = doc(db, "profiles", userName);
+    const userSnap = await getDoc(userRef);
+    userData = userSnap.exists() ? userSnap.data() : {};
+  } catch (e) {
+    console.error("讀取使用者 history 失敗：", e);
+  }
+
   if (!container) return;
   container.innerHTML = "";
 
-  const series = data.sessionSeries || {};
-  const keys = Object.keys(series);
+  // 4️⃣ 針對這次訓練的每一個動作，畫「最近 30 次完成訓練」折線圖
+  seriesArray.forEach((item, idx) => {
+    const name = item.name || `動作 ${idx + 1}`;
+    const safeName = makeSafeName(name);
 
-  if (keys.length === 0) {
-    container.innerHTML =
-      "<p>今天還沒有任何重量紀錄。回到訓練紀錄頁，做完動作後依照感受按一下【加重 / 維持 / 減重】，就會在這裡看到圖表囉！</p>";
-    return;
-  }
+    const historyObj = getHistoryForExercise(userData, name);
+    const entries = Object.entries(historyObj).sort((a, b) =>
+      a[0].localeCompare(b[0])
+    );
+    const recent = entries.slice(-30); // ⬅️ 只要最近 30 筆「完成訓練」紀錄
+    const dates = recent.map(([d]) => d);
+    const weights = recent.map(([, w]) => w);
 
-  let i = 1;
-  for (const key of keys) {
-    const ex = series[key];
-    const weights = ex.weights || [];
-    const count = weights.length;
-
-    if (count === 0) continue;
+    // 今天的重量：優先用 history 最後一筆；沒有就退回 sessionSeries 裡的最後一個
+    const todayWeight =
+      weights.length
+        ? weights[weights.length - 1]
+        : (Array.isArray(item.weights) && item.weights[item.weights.length - 1]) || 0;
 
     const card = document.createElement("div");
-    card.className = "card p-3 mb-4";
+    card.className = "card p-3 mb-3 shadow-sm";
+
+    const canvasId = `fb-chart-${idx}`;
+
     card.innerHTML = `
-      <h4>${i}. ${ex.name}</h4>
-      <p>本次共記錄 ${count} 筆重量變化（最多 30 筆）。</p>
-      <canvas id="chart-${i}" height="130"></canvas>
-      <p class="comment" style="margin-top:8px;color:#555;">${buildComment(weights)}</p>
+      <h3 style="margin-bottom:6px;">${idx + 1}. ${name}</h3>
+      <p style="margin:2px 0;">本次訓練重量：<b>${todayWeight || "尚未有紀錄"}</b> kg</p>
+      <p style="margin:2px 0; font-size:13px; color:#666;">
+        折線圖顯示「每次按下 <完成訓練> 時」寫入的歷史紀錄（最多 30 筆）。
+      </p>
+      <canvas id="${canvasId}" height="140"></canvas>
     `;
+
     container.appendChild(card);
 
-    const labels = weights.map((_, idx) => `第 ${idx + 1} 次`);
+    // 沒有任何歷史就不要畫圖
+    if (!dates.length || !weights.length) {
+      const tip = document.createElement("p");
+      tip.style.fontSize = "13px";
+      tip.style.color = "#999";
+      tip.textContent = "目前尚未有過去的完成訓練紀錄。";
+      card.appendChild(tip);
+      return;
+    }
 
-    const ctx = document.getElementById(`chart-${i}`);
+    const ctx = document.getElementById(canvasId);
+    // 全部點都是「完成訓練」時寫進 DB 的一筆
     new Chart(ctx, {
       type: "line",
       data: {
-        labels,
+        labels: dates,
         datasets: [
           {
-            label: "重量 (kg)",
+            label: "每次完成訓練的重量 (kg)",
             data: weights,
-            borderColor: "#0d6efd",
-            backgroundColor: "rgba(13,110,253,0.12)",
+            borderColor: "#007bff",
+            backgroundColor: "rgba(0,123,255,0.1)",
             tension: 0.2,
           },
         ],
@@ -121,12 +172,5 @@ window.addEventListener("DOMContentLoaded", () => {
         },
       },
     });
-
-    i++;
-  }
-
-  if (!container.children.length) {
-    container.innerHTML =
-      "<p>今天雖然有完成訓練，但沒有任何按下【加重 / 維持 / 減重】的紀錄，因此沒有可以繪製的圖表。</p>";
-  }
+  });
 });
