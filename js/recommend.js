@@ -12,7 +12,6 @@ function getMenuDocPart(part) {
   if (part.includes("二頭")) return "手部▫ 二頭肌（Biceps）";
   if (part.includes("三頭")) return "三頭肌（Triceps）";
 
-  // 其他（胸部、背部、腿部、肩部、核心）docId 就是「增肌_胸部」這種
   return part;
 }
 
