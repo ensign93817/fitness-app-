@@ -27,15 +27,16 @@ function makeSafeName(name) {
 }
 
 function getMenuDocPart(part) {
-  switch (part) {
-    case "二頭肌":
-      return "手部▫ 二頭肌（Biceps）";
-    case "三頭肌":
-      return "三頭肌（Triceps）";
-    default:
-      return part;
-  }
+  if (!part) return "";
+
+  // 只要有二頭 / 三頭 這幾個字，不管前面後面加什麼，都導到正確 doc 名稱
+  if (part.includes("二頭")) return "手部▫ 二頭肌（Biceps）";
+  if (part.includes("三頭")) return "三頭肌（Triceps）";
+
+  // 其他（胸部、背部、腿部、肩部、核心）docId 就是「增肌_胸部」這種
+  return part;
 }
+
 
 
 // === 🔥 Firebase SDK 載入 ===
