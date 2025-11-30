@@ -121,13 +121,15 @@ async function loadRecommendation(userName) {
     currentPart = "胸部";
   }
 
-  todayGoalText.textContent = currentGoal;
-  todayPartText.textContent = currentPart;
+todayGoalText.textContent = currentGoal;
+todayPartText.textContent = currentPart;
 
-  manualGoal.value = currentGoal;
-  manualPart.value = currentPart;
+// 手動選單可能還沒做出來，所以要先確認有沒有找到
+if (manualGoal) manualGoal.value = currentGoal;
+if (manualPart) manualPart.value = currentPart;
 
-  await loadMenuPreview(userName, currentGoal, currentPart, menuContainer);
+await loadMenuPreview(userName, currentGoal, currentPart, menuContainer);
+
 
   return { currentGoal, currentPart };
 }
@@ -213,7 +215,8 @@ window.addEventListener("DOMContentLoaded", async () => {
     manualArea.style.display = manualArea.style.display === "none" ? "block" : "none";
   });
 
-  // 手動重新套用條件（還在今日推薦頁，只是更新預覽）
+// 手動重新套用條件（還在今日推薦頁，只是更新預覽）
+if (applyManualBtn) {
   applyManualBtn.addEventListener("click", async () => {
     currentGoal = manualGoal.value;
     currentPart = manualPart.value;
@@ -223,4 +226,6 @@ window.addEventListener("DOMContentLoaded", async () => {
 
     await loadMenuPreview(userName, currentGoal, currentPart, menuContainer);
   });
+}
+
 });
