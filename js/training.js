@@ -212,13 +212,14 @@ function getHistoryForExercise(userData, exerciseName) {
   return {}; // 找不到就回傳空物件
 }
 
-// === 🏋️‍♀️ 顯示訓練動作 ===
+// === 🏋️‍♀️ 顯示訓練動作（訓練紀錄頁面用） ===
 async function displayExercises(db, userName, exercises) {
   const container = document.getElementById("exerciseContainer");
   container.innerHTML = "";
   document.getElementById("completeTrainingBtn")?.remove();
   window.charts = [];
 
+  // 🔁 同個動作只留一次
   const names = new Set();
   const uniqueExercises = exercises.filter(ex => {
     if (!ex.name || names.has(ex.name)) return false;
@@ -226,6 +227,7 @@ async function displayExercises(db, userName, exercises) {
     return true;
   });
 
+  // 先把整個使用者歷史抓出來
   const userRef = doc(db, "profiles", userName);
   const userSnap = await getDoc(userRef);
   const userData = userSnap.exists() ? userSnap.data() : {};
@@ -237,17 +239,23 @@ async function displayExercises(db, userName, exercises) {
     // 讀 Firestore history → 只取最近 30 筆完成訓練紀錄
     const history = getHistoryForExercise(userData, ex.name);
     const entries = Object.entries(history).sort((a, b) => a[0].localeCompare(b[0]));
-    const recent = entries.slice(-30);
-    const dates = recent.map(([d]) => d);
-    const weightsHist = recent.map(([, w]) => w);
+    const recent = entries.slice(-30);          // 最多 30 筆「歷史」
+    const historyDates = recent.map(([d]) => d);
+    const historyWeights = recent.map(([, w]) => w);
 
-    const lastWeight = weightsHist.at(-1) || ex.defaultWeight || ex.weight || 10;
+    // 如果完全沒歷史，就用預設重量當起點
+    const lastHistoryWeight =
+      historyWeights.at(-1) || ex.defaultWeight || ex.weight || 10;
 
-    // 初始化當次 sessionSeries（只給本次回顧用）
+    // 🟢 當次訓練一開始的重量（之後按按鈕就改這個）
+    let currentWeight = lastHistoryWeight;
+
+    // 初始化當次 sessionSeries（給 feedback.html 用）
     if (!sessionSeries[safeName]) {
       sessionSeries[safeName] = { name: ex.name, weights: [] };
     }
 
+    // === 建立卡片 ===
     const card = document.createElement("div");
     card.className = "card p-3 mb-3 shadow-sm";
     card.dataset.safeName = safeName;
@@ -257,7 +265,7 @@ async function displayExercises(db, userName, exercises) {
       <h4>${i + 1}. ${ex.name}</h4>
       <p>組數：${ex.defaultSets || "未設定"}　次數：${ex.defaultReps || "未設定"}</p>
       <p>休息：${ex.restSec || "未設定"} 秒</p>
-      <p class="weight">目前重量：${lastWeight || "尚未有紀錄"} kg</p>
+      <p class="weight">目前重量：${currentWeight || "尚未有紀錄"} kg</p>
 
       <div class="btn-group mb-2">
         <button class="btn btn-success add-btn">加重（太輕鬆）</button>
@@ -265,8 +273,8 @@ async function displayExercises(db, userName, exercises) {
         <button class="btn btn-danger reduce-btn">減重（太吃力）</button>
       </div>
       <p style="font-size:14px; color:#777; margin-top:4px;">
-        做完今天的組數後，依照感受選一個：太輕鬆 → 按「加重」、剛剛好 → 按「維持」、太吃力 → 按「減重」。
-        本頁折線圖只顯示「過去完成訓練」的紀錄，不會因為按按鈕就多一個點。
+        折線圖顯示「過去最多 30 筆訓練紀錄」＋「本次訓練的目前重量」。
+        按加重 / 減重 / 維持，只會更新最後一個點，不會一直寫入資料庫。
       </p>
 
       <canvas id="chart-${i}" height="120"></canvas>
@@ -278,9 +286,8 @@ async function displayExercises(db, userName, exercises) {
     const reduceBtn = card.querySelector(".reduce-btn");
     const weightText = card.querySelector(".weight");
     const delta = 2.5;
-    let currentWeight = lastWeight;
 
-    // ✅ 只記錄「本次訓練」的序列（給 feedback.html 用）；不動圖、不寫 DB
+    // 🔹 只記錄「本次訓練」的序列（給 feedback.html 用）；不動 DB
     function saveWeightChange(newWeight) {
       let s = sessionSeries[safeName];
       if (!s) {
@@ -292,17 +299,34 @@ async function displayExercises(db, userName, exercises) {
       }
     }
 
+    // 先宣告 chart 變數，讓下面的事件可以關閉 capture 到它
+    let chart;
+
+    // ✅ 更新「圖上最後一點」（本次訓練）
+    function updateLivePointOnChart() {
+      if (!chart) return;
+      const ds = chart.data.datasets[0];
+      const dataArr = ds.data;
+      if (!dataArr.length) return;
+
+      // 最後一個點就是「本次」
+      dataArr[dataArr.length - 1] = Number(currentWeight.toFixed(1));
+      chart.update();
+    }
+
     // 🔼 加重
     addBtn.addEventListener("click", () => {
       currentWeight += delta;
       weightText.textContent = `目前重量：${currentWeight.toFixed(1)} kg`;
       saveWeightChange(currentWeight);
+      updateLivePointOnChart();
     });
 
-    // ➖ 維持
+    // ➖ 維持（只是記錄一下，不改重量）
     keepBtn.addEventListener("click", () => {
       alert(`💪 維持重量 ${currentWeight.toFixed(1)} kg`);
       saveWeightChange(currentWeight);
+      updateLivePointOnChart();
     });
 
     // 🔽 減重
@@ -310,18 +334,28 @@ async function displayExercises(db, userName, exercises) {
       currentWeight = Math.max(0, currentWeight - delta);
       weightText.textContent = `目前重量：${currentWeight.toFixed(1)} kg`;
       saveWeightChange(currentWeight);
+      updateLivePointOnChart();
     });
 
-    // 🔵 卡片上的圖：只顯示 history（長期），不因按鈕改變
+    // 🔵 建立折線圖：
+    //     X 軸：歷史時間（最多 30 筆）＋ 1 個「本次」
+    //     Y 軸：歷史重量＋本次目前重量
+    const labels = [...historyDates];
+    const data = [...historyWeights];
+
+    // 「本次訓練」這個點（一開始先放起始重量，之後按按鈕會更新）
+    labels.push("本次");
+    data.push(Number(currentWeight.toFixed(1)));
+
     const ctx = document.getElementById(`chart-${i}`);
-    const chart = new Chart(ctx, {
+    chart = new Chart(ctx, {
       type: "line",
       data: {
-        labels: dates.length ? dates : [localISODateTime()],
+        labels: labels.length ? labels : [localISODateTime()],
         datasets: [
           {
-            label: "歷史完成訓練重量 (kg)",
-            data: weightsHist.length ? weightsHist : [lastWeight],
+            label: "完成訓練重量 (kg)",
+            data: data.length ? data : [currentWeight],
             borderColor: "#007bff",
             backgroundColor: "rgba(0,123,255,0.1)",
             tension: 0.2,
@@ -334,9 +368,11 @@ async function displayExercises(db, userName, exercises) {
       },
     });
 
+    // 存到全域（目前你有在用 window.charts，就順便維持）
     window.charts.push({ safeName, chart });
   }
 
+  // === ✅ 完成訓練按鈕（下面這段跟你原本一樣，不用動） ===
   if (document.getElementById("completeTrainingBtn")) return;
 
   const completeBtn = document.createElement("button");
@@ -346,27 +382,24 @@ async function displayExercises(db, userName, exercises) {
   completeBtn.style = "display:block;margin:30px auto;padding:10px 20px;font-size:18px;";
   container.insertAdjacentElement("afterend", completeBtn);
 
-  // === ✅ 完成訓練事件 ===
   completeBtn.addEventListener("click", async () => {
     const today = localISODate();
     const cards = document.querySelectorAll("#exerciseContainer .card");
     let total = 0;
     const updates = {};
 
-    // 1. 以「目前重量」當作本次訓練紀錄（每個動作 1 筆）
     for (const card of cards) {
       const nameText = card.dataset.exerciseName || card.querySelector("h4").textContent;
-      const pureName = nameText.replace(/^\d+\.\s*/, ""); // 去掉「1. 」
+      const pureName = nameText.replace(/^\d+\.\s*/, "");
       const safeName = makeSafeName(pureName);
 
       const weightStr = card.querySelector(".weight").textContent;
       const weight = parseFloat(weightStr.replace(/[^\d.]/g, "")) || 0;
 
-      const slot = localISODateTime();  // 新的時間 key
+      const slot = localISODateTime();
       updates[`history.${safeName}.${slot}`] = weight;
       total += weight;
 
-      // 確保本次 sessionSeries 至少有一筆（沒按按鈕也會有）
       if (!sessionSeries[safeName]) {
         sessionSeries[safeName] = { name: pureName, weights: [weight] };
       } else if (!sessionSeries[safeName].weights.length) {
@@ -376,7 +409,6 @@ async function displayExercises(db, userName, exercises) {
 
     try {
       const userRef = doc(db, "profiles", localStorage.getItem("userName"));
-      console.log("🚀 開始寫入 Firestore updates：", updates);
       await setDoc(userRef, { createdAt: new Date().toISOString() }, { merge: true });
 
       for (const [k, v] of Object.entries(updates)) {
@@ -384,7 +416,7 @@ async function displayExercises(db, userName, exercises) {
       }
 
       const goal = localStorage.getItem("lastGoal");
-      const bodyPart = localStorage.getItem("lastPart"); // 中文部位
+      const bodyPart = localStorage.getItem("lastPart");
 
       await setDoc(
         userRef,
@@ -398,13 +430,12 @@ async function displayExercises(db, userName, exercises) {
         { merge: true }
       );
 
-      // 🔴 把「當次訓練的重量序列」存到 localStorage，給 feedback.html 用
       const feedbackPayload = {
         date: today,
         goal,
         bodyPart,
-        sessionSeries,   // { safeName: { name, weights: [...] }, ... }
-        totalWeight: total
+        sessionSeries,
+        totalWeight: total,
       };
       localStorage.setItem("lastFeedbackData", JSON.stringify(feedbackPayload));
 
@@ -416,7 +447,6 @@ async function displayExercises(db, userName, exercises) {
 
       await showLastTraining();
 
-      // 導向訓後回顧頁面（只看這次 session）
       window.location.href = "feedback.html";
     } catch (e) {
       console.warn("❌ 完成訓練寫入失敗：", e);
