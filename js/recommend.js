@@ -90,7 +90,7 @@ async function loadRecommendation(userName) {
   const todayGoalText = document.getElementById("todayGoalText");
   const todayPartText = document.getElementById("todayPartText");
   const manualGoal = document.getElementById("manualGoal");
-  const manualPart = document.getElementById("manualPart");
+  const manualPart = document.getElementById("partSelect");
   const menuContainer = document.getElementById("menuContainer");
 
   let currentGoal = "增肌";
@@ -189,14 +189,14 @@ window.addEventListener("DOMContentLoaded", async () => {
   const userName = await initUser();
   if (!userName) return;
 
-  const acceptBtn = document.getElementById("acceptBtn");
-  const manualBtn = document.getElementById("manualBtn");
-  const manualArea = document.getElementById("manualArea");
-  const manualGoal = document.getElementById("manualGoal");
-  const manualPart = document.getElementById("manualPart");
-  const todayGoalText = document.getElementById("todayGoalText");
-  const todayPartText = document.getElementById("todayPartText");
-  const menuContainer = document.getElementById("menuContainer");
+const acceptBtn = document.getElementById("acceptBtn");
+const manualBtn = document.getElementById("manualBtn");
+const manualArea = document.getElementById("manualArea");
+const manualPart = document.getElementById("partSelect");
+const todayGoalText = document.getElementById("todayGoalText");
+const todayPartText = document.getElementById("todayPartText");
+const applyManualBtn = document.getElementById("applyManualBtn");
+
 
   let { currentGoal, currentPart } = await loadRecommendation(userName);
 
