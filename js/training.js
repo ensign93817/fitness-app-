@@ -26,7 +26,6 @@ function makeSafeName(name) {
   return (name || "").replace(/[^\w一-龥ㄱ-ㅎㅏ-ㅣ]/g, "_");
 }
 
-// 🔧 顯示用部位名稱 → Firestore doc 用的部位字串
 function getMenuDocPart(part) {
   switch (part) {
     case "二頭肌":
@@ -34,10 +33,10 @@ function getMenuDocPart(part) {
     case "三頭肌":
       return "三頭肌（Triceps）";
     default:
-      // 胸部、背部、腿部、肩部、核心：docId 是「增肌_胸部」這種，直接用中文
       return part;
   }
 }
+
 
 // === 🔥 Firebase SDK 載入 ===
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
