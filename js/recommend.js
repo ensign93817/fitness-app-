@@ -77,7 +77,7 @@ async function initUser() {
   let userName = localStorage.getItem("userName");
 
   if (userName) {
-    const change = confirm(`目前登入使用者為「${userName}」，是否要切換？`);
+ const change = await customConfirm(`目前登入使用者為「${userName}」，是否要切換？`);
     if (change) {
       userName = prompt("請輸入新的使用者名稱：")?.trim() || userName;
       localStorage.setItem("userName", userName);
