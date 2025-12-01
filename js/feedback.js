@@ -50,6 +50,56 @@ import {
   getDoc,
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+// 取得 Firestore（你原本應該已經有 initializeApp / getFirestore）
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const firebaseConfig = { /* 你的設定，跟其他頁一樣 */ };
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// 🔹 訓後回顧頁：載入使用者與最近一次訓練
+async function initFeedbackHeader() {
+  const userNameEl = document.getElementById("userNameText");
+  const lastTrainingEl = document.getElementById("lastTrainingText");
+
+  const userName = localStorage.getItem("userName");
+
+  if (!userName) {
+    if (userNameEl) userNameEl.textContent = "（尚未登入）";
+    if (lastTrainingEl) lastTrainingEl.textContent = "尚未有訓練紀錄。";
+    return null;
+  }
+
+  if (userNameEl) userNameEl.textContent = userName;
+
+  try {
+    const userRef = doc(db, "profiles", userName);
+    const snap = await getDoc(userRef);
+
+    if (!snap.exists()) {
+      if (lastTrainingEl) lastTrainingEl.textContent = "尚未建立個人資料。";
+      return userName;
+    }
+
+    const data = snap.data();
+    if (data.lastTraining) {
+      const { goal, bodyPart, date } = data.lastTraining;
+      if (lastTrainingEl) {
+        lastTrainingEl.textContent =
+          `${date || "日期未紀錄"}，目標 ${goal || "-"}，部位 ${bodyPart || "-"}`;
+      }
+    } else {
+      if (lastTrainingEl) lastTrainingEl.textContent = "尚未有訓練紀錄。";
+    }
+  } catch (e) {
+    console.error("❌ 無法讀取 lastTraining：", e);
+    if (lastTrainingEl) lastTrainingEl.textContent = "讀取失敗，請稍後再試。";
+  }
+
+  return userName;
+}
+
 // === ⚙️ Firebase 初始化設定 ===
 const firebaseConfig = {
   apiKey: "AIzaSyBur0DoRPT0csPqtyDSOQBYMjlGaqf3EB0",
@@ -126,7 +176,7 @@ function renderExerciseChart(ctx, labels, data) {
 
 // === 🚀 頁面啟動 ===
 window.addEventListener("DOMContentLoaded", async () => {
-  // 1. 讀本次訓練摘要（training.js 在按下 「完成訓練」 時存進 localStorage）
+  await initFeedbackHeader();
   const raw = localStorage.getItem("lastFeedbackData");
   if (!raw) {
     alert("找不到本次訓練的回顧資料，請先到『訓練紀錄』完成一次訓練。");
