@@ -16,6 +16,31 @@ function getMenuDocPart(part) {
 }
 
 
+// 自訂 Confirm（通用）
+function customConfirm(message) {
+  return new Promise(resolve => {
+    const overlay = document.getElementById("confirmOverlay");
+    const msgBox = document.getElementById("confirmMessage");
+    const yesBtn = document.getElementById("confirmYes");
+    const noBtn = document.getElementById("confirmNo");
+
+    msgBox.textContent = message;
+    overlay.style.display = "flex";
+
+    // 是
+    yesBtn.onclick = () => {
+      overlay.style.display = "none";
+      resolve(true);
+    };
+
+    // 否
+    noBtn.onclick = () => {
+      overlay.style.display = "none";
+      resolve(false);
+    };
+  });
+}
+
 // === 🔥 Firebase SDK 載入 ===
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import {
