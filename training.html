@@ -120,6 +120,25 @@
       <div id="exerciseContainer"></div>
     </section>
   </main>
+<!-- 🔵 自訂 Confirm 彈窗（通用） -->
+<div id="confirmOverlay" style="
+  position: fixed; inset: 0; background: rgba(0,0,0,0.4); 
+  display: none; align-items: center; justify-content: center;
+">
+  <div style="background: white; padding: 20px; border-radius: 10px; width: 300px; text-align:center;">
+    <p id="confirmMessage" style="font-size:16px; margin-bottom:20px;"></p>
+
+    <button id="confirmNo" 
+      style="background:#0d6efd; color:white; padding:8px 20px; border-radius:6px; border:none; margin-right:10px;">
+      否
+    </button>
+
+    <button id="confirmYes"
+      style="background:#e9ecef; color:#333; padding:8px 20px; border-radius:6px; border:none;">
+      是
+    </button>
+  </div>
+</div>
 
   <!-- 保留 firebase.js 沒關係，training.js 自己也會初始化 Firebase -->
   <script type="module" src="js/firebase.js"></script>
