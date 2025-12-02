@@ -95,8 +95,9 @@
     <h1>訓後回顧</h1>
 
     <div class="summary-row">
-      👤 使用者：<b id="summaryUser">載入中...</b><br/>
-      📅 最近一次訓練：<span id="summaryLast">讀取中...</span>
+<p>👤 使用者：<span id="userNameText">載入中...</span></p>
+<p>📅 最近一次訓練：<span id="lastTrainingText">讀取中...</span></p>
+
     </div>
 
     <!-- 🧾 長期歷史使用說明 -->
@@ -133,7 +134,10 @@
 </div>
 
   </main>
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-  <script type="module" src="js/feedback.js"></script>
+<!-- 一定要加 type="module" -->
+<script type="module" src="js/feedback.js"></script>
 </body>
 </html>
