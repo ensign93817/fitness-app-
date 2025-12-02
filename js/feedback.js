@@ -18,31 +18,25 @@ function makeSafeName(name) {
   return (name || "").replace(/[^\w一-龥ㄱ-ㅎㅏ-ㅣ]/g, "_");
 }
 
-// 🔎 兼容舊版 safeName：讀歷史時同時嘗試舊的 key
 function getHistoryForExercise(userData, exerciseName, safeKeyFromSession) {
   const allHistory = userData.history || {};
 
-  // 1. 先試這次 session 用的 safeName
   if (safeKeyFromSession && allHistory[safeKeyFromSession]) {
     return allHistory[safeKeyFromSession];
   }
-
-  // 2. 新規則
   const keyNew = makeSafeName(exerciseName);
   if (allHistory[keyNew]) return allHistory[keyNew];
 
-  // 3. 舊規則 1
   const keyOld1 = (exerciseName || "").replace(/[\/\[\]#$.()\s（）]/g, "_");
   if (allHistory[keyOld1]) return allHistory[keyOld1];
 
-  // 4. 舊規則 2
   const keyOld2 = (exerciseName || "").replace(/[^\wㄱ-ㅎㅏ-ㅣ가-힣一-龥]/g, "_");
   if (allHistory[keyOld2]) return allHistory[keyOld2];
 
   return {};
 }
 
-// === 🔥 Firebase SDK 載入（只要寫一次就好） ===
+// === 🔥 Firebase SDK：只 import 一次就好 ===
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import {
   getFirestore,
@@ -50,7 +44,7 @@ import {
   getDoc,
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// === ⚙️ Firebase 初始化設定（跟其他頁一樣） ===
+// === ⚙️ Firebase 初始化設定：也只宣告一次 ===
 const firebaseConfig = {
   apiKey: "AIzaSyBur0DoRPT0csPqtyDSOQBYMjlGaqf3EB0",
   authDomain: "fitness-guide-9a8f3.firebaseapp.com",
