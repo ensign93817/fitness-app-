@@ -22,12 +22,12 @@ function makeSafeName(name) {
 function getHistoryForExercise(userData, exerciseName, safeKeyFromSession) {
   const allHistory = userData.history || {};
 
-  // 1. 先試這次 session 用的 safeName（key 就是 history 裡的欄位）
+  // 1. 先試這次 session 用的 safeName
   if (safeKeyFromSession && allHistory[safeKeyFromSession]) {
     return allHistory[safeKeyFromSession];
   }
 
-  // 2. 再試新的規則
+  // 2. 新規則
   const keyNew = makeSafeName(exerciseName);
   if (allHistory[keyNew]) return allHistory[keyNew];
 
@@ -42,7 +42,7 @@ function getHistoryForExercise(userData, exerciseName, safeKeyFromSession) {
   return {};
 }
 
-// === 🔥 Firebase SDK 載入 ===
+// === 🔥 Firebase SDK 載入（只要寫一次就好） ===
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import {
   getFirestore,
@@ -50,15 +50,21 @@ import {
   getDoc,
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// 取得 Firestore（你原本應該已經有 initializeApp / getFirestore）
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+// === ⚙️ Firebase 初始化設定（跟其他頁一樣） ===
+const firebaseConfig = {
+  apiKey: "AIzaSyBur0DoRPT0csPqtyDSOQBYMjlGaqf3EB0",
+  authDomain: "fitness-guide-9a8f3.firebaseapp.com",
+  projectId: "fitness-guide-9a8f3",
+  storageBucket: "fitness-guide-9a8f3.firebasestorage.app",
+  messagingSenderId: "969288112649",
+  appId: "1:969288112649:web:58b5b807c410388b1836d8",
+  measurementId: "G-7X1L324K0Q",
+};
 
-const firebaseConfig = { /* 你的設定，跟其他頁一樣 */ };
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// 🔹 訓後回顧頁：載入使用者與最近一次訓練
+// 🔹 訓後回顧頁：載入使用者與最近一次訓練（處理「載入中…」那兩行）
 async function initFeedbackHeader() {
   const userNameEl = document.getElementById("userNameText");
   const lastTrainingEl = document.getElementById("lastTrainingText");
@@ -100,21 +106,7 @@ async function initFeedbackHeader() {
   return userName;
 }
 
-// === ⚙️ Firebase 初始化設定 ===
-const firebaseConfig = {
-  apiKey: "AIzaSyBur0DoRPT0csPqtyDSOQBYMjlGaqf3EB0",
-  authDomain: "fitness-guide-9a8f3.firebaseapp.com",
-  projectId: "fitness-guide-9a8f3",
-  storageBucket: "fitness-guide-9a8f3.firebasestorage.app",
-  messagingSenderId: "969288112649",
-  appId: "1:969288112649:web:58b5b807c410388b1836d8",
-  measurementId: "G-7X1L324K0Q",
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-// === 👤 取得使用者 ===
+// === 👤 取得使用者 (for history) ===
 async function getCurrentUser() {
   const userName = localStorage.getItem("userName") || "guestUser";
   const userRef = doc(db, "profiles", userName);
@@ -176,7 +168,8 @@ function renderExerciseChart(ctx, labels, data) {
 
 // === 🚀 頁面啟動 ===
 window.addEventListener("DOMContentLoaded", async () => {
-  await initFeedbackHeader();
+  await initFeedbackHeader();   // 把「載入中…」換成真實資料
+
   const raw = localStorage.getItem("lastFeedbackData");
   if (!raw) {
     alert("找不到本次訓練的回顧資料，請先到『訓練紀錄』完成一次訓練。");
@@ -184,18 +177,6 @@ window.addEventListener("DOMContentLoaded", async () => {
     return;
   }
 
-  /** lastFeedbackData 結構（training.js 寫入）：
-   * {
-   *   date: "YYYY-MM-DD",
-   *   goal: "增肌",
-   *   bodyPart: "胸部",
-   *   sessionSeries: {
-   *     safeName1: { name: "上斜推舉", weights: [...] }, // weights 在這裡不再用來畫圖
-   *     ...
-   *   },
-   *   totalWeight: 123.4
-   * }
-   */
   const sessionInfo = JSON.parse(raw);
   const { date, goal, bodyPart, sessionSeries, totalWeight } = sessionInfo;
 
@@ -209,13 +190,10 @@ window.addEventListener("DOMContentLoaded", async () => {
     `;
   }
 
-  // 3. 讀取使用者 Firestore 資料（history 只記「完成訓練」那一次）
+  // 3. 讀取 Firestore 資料
   const { userName, userData } = await getCurrentUser();
   if (!userName || !userData) return;
 
-  const historyAll = userData.history || {};
-
-  // 4. 依照這次訓練的動作，一個一個畫圖
   const entries = Object.entries(sessionSeries || {});
   if (!entries.length) {
     const container = document.getElementById("feedbackContainer");
@@ -229,14 +207,11 @@ window.addEventListener("DOMContentLoaded", async () => {
   entries.forEach(([safeKey, info], idx) => {
     const exName = info.name || safeKey;
 
-    // 從 Firestore 的 history 抓「只在完成訓練時寫入」的那些點
     const history = getHistoryForExercise(userData, exName, safeKey);
-
-    // history: { timeKey1: weight1, timeKey2: weight2, ... }
     const sorted = Object.entries(history).sort((a, b) =>
       a[0].localeCompare(b[0])
     );
-    const recent = sorted.slice(-30); // 只取最近 30 筆
+    const recent = sorted.slice(-30);
 
     let labels = [];
     let data = [];
@@ -244,7 +219,6 @@ window.addEventListener("DOMContentLoaded", async () => {
       labels = recent.map(([t]) => t);
       data = recent.map(([, w]) => w);
     } else {
-      // 沒有歷史紀錄：至少畫出今天這一點
       const lastW =
         (info.weights && info.weights.length
           ? info.weights[info.weights.length - 1]
@@ -254,8 +228,6 @@ window.addEventListener("DOMContentLoaded", async () => {
     }
 
     const lastWeight = data[data.length - 1] || 0;
-
-    // 建立卡片 + canvas
     const ctx = createExerciseCard(idx, exName, lastWeight.toFixed(1));
     renderExerciseChart(ctx, labels, data);
   });
