@@ -203,7 +203,8 @@ window.addEventListener("DOMContentLoaded", async () => {
     }
     return;
   }
-
+  const container = document.getElementById("feedbackContainer");
+  if (container) container.innerHTML = "";
   entries.forEach(([safeKey, info], idx) => {
     const exName = info.name || safeKey;
 
