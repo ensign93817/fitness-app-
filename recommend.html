@@ -112,10 +112,6 @@
       <p>📌 上次訓練：<span id="lastTrainingText">讀取中...</span></p>
       <p>✅ 今天建議：目標 <b id="todayGoalText">-</b>，部位 <b id="todayPartText">-</b></p>
 
-      <div style="margin-top:12px;">
-        <button id="manualBtn" class="btn btn-outline">✏️ 我想自己選</button>
-      </div>
-
       <!-- ✏️ 在今日推薦頁面直接改目標與部位 -->
       <div id="manualArea">
         <p style="margin:8px 0;">手動調整今日訓練目標與部位：</p>
@@ -159,9 +155,17 @@
 
   <h2>推薦訓練菜單</h2>
 
-  <div id="menuContainer">正在載入菜單...</div>
-  <button id="acceptBtn" class="btn btn-primary">✅ 接受推薦，開始訓練</button>
-</section>
+<div id="menuContainer">正在載入菜單...</div>
+
+<div style="margin-top:12px;">
+  <button id="acceptBtn" class="btn btn-primary">
+    ✅ 接受推薦，開始訓練
+  </button>
+  <button id="manualBtn" class="btn btn-outline" style="margin-left:8px;">
+    ✏️ 我想自己選
+  </button>
+</div>
+
 
   </main>
 <!-- 🔵 自訂 Confirm 彈窗（通用） -->
