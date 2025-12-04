@@ -115,7 +115,7 @@ async function loadRecommendation(userName) {
   const todayGoalText = document.getElementById("todayGoalText");
   const todayPartText = document.getElementById("todayPartText");
   const manualGoal = document.getElementById("manualGoal");
-  const manualPart = document.getElementById("partSelect");
+  const manualPart = document.getElementById("manualPart");
   const menuContainer = document.getElementById("menuContainer");
 
   let currentGoal = "增肌";
@@ -214,43 +214,49 @@ window.addEventListener("DOMContentLoaded", async () => {
   const userName = await initUser();
   if (!userName) return;
 
-const acceptBtn = document.getElementById("acceptBtn");
-const manualBtn = document.getElementById("manualBtn");
-const manualArea = document.getElementById("manualArea");
-const manualPart = document.getElementById("partSelect");
-const todayGoalText = document.getElementById("todayGoalText");
-const todayPartText = document.getElementById("todayPartText");
-const applyManualBtn = document.getElementById("applyManualBtn");
+  const acceptBtn      = document.getElementById("acceptBtn");
+  const manualBtn      = document.getElementById("manualBtn");
+  const manualArea     = document.getElementById("manualArea");
+  const manualGoal     = document.getElementById("manualGoal");
+  const manualPart     = document.getElementById("manualPart");
+  const todayGoalText  = document.getElementById("todayGoalText");
+  const todayPartText  = document.getElementById("todayPartText");
+  const applyManualBtn = document.getElementById("applyManualBtn");
+  const menuContainer  = document.getElementById("menuContainer");
 
+  // ⭐⭐⭐ 一進到頁面就讓手動設定區塊展開 ⭐⭐⭐
+  manualArea.style.display = "block";   // <-- 關鍵！
 
   let { currentGoal, currentPart } = await loadRecommendation(userName);
 
-  // ✅ 接受推薦 → 直接帶參數進 training.html
+  // 接受推薦
   acceptBtn.addEventListener("click", () => {
     localStorage.setItem("lastGoal", currentGoal);
     localStorage.setItem("lastPart", currentPart);
+
     const url =
       `training.html?goal=${encodeURIComponent(currentGoal)}` +
       `&part=${encodeURIComponent(currentPart)}`;
     window.location.href = url;
   });
 
-  // ✏️ 展開手動設定區塊
+  // ❌ 手動打開/收起按鈕不再需要 → 移除/註解掉
+  /*
   manualBtn.addEventListener("click", () => {
     manualArea.style.display = manualArea.style.display === "none" ? "block" : "none";
   });
+  */
 
-// 手動重新套用條件（還在今日推薦頁，只是更新預覽）
-if (applyManualBtn) {
-  applyManualBtn.addEventListener("click", async () => {
-    currentGoal = manualGoal.value;
-    currentPart = manualPart.value;
+  // 手動重新套用條件
+  if (applyManualBtn) {
+    applyManualBtn.addEventListener("click", async () => {
+      currentGoal = manualGoal.value;
+      currentPart = manualPart.value;
 
-    todayGoalText.textContent = currentGoal;
-    todayPartText.textContent = currentPart;
+      todayGoalText.textContent = currentGoal;
+      todayPartText.textContent = currentPart;
 
-    await loadMenuPreview(userName, currentGoal, currentPart, menuContainer);
-  });
-}
-
+      await loadMenuPreview(userName, currentGoal, currentPart, menuContainer);
+    });
+  }
 });
