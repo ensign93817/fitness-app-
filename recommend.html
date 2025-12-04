@@ -112,33 +112,6 @@
       <p>📌 上次訓練：<span id="lastTrainingText">讀取中...</span></p>
       <p>✅ 今天建議：目標 <b id="todayGoalText">-</b>，部位 <b id="todayPartText">-</b></p>
 
-      <!-- ✏️ 在今日推薦頁面直接改目標與部位 -->
-      <div id="manualArea">
-        <p style="margin:8px 0;">手動調整今日訓練目標與部位：</p>
-        <label for="manualGoal">訓練目標：</label>
-        <select id="manualGoal">
-          <option value="增肌">增肌</option>
-          <option value="力量">力量</option>
-          <option value="減脂">減脂</option>
-          <option value="耐力">耐力</option>
-        </select>
-
-<label for="partSelect">訓練部位：</label>
-<select id="partSelect">
-  <option value="胸部">胸部</option>
-  <option value="背部">背部</option>
-  <option value="腿部">腿部</option>
-  <option value="肩部">肩部</option>
-  <option value="二頭肌">手部▫ 二頭肌（Biceps）</option>
-  <option value="三頭肌">三頭肌（Triceps）</option>
-  <option value="核心">核心</option>
-</select>
-
-
-        <button id="applyManualBtn" class="btn btn-primary" style="margin-top:6px;">
-          重新套用條件
-        </button>
-      </div>
     </section>
 
   <!-- 🔹 推薦菜單預覽（只列動作資料，不含按鈕與折線圖） -->
@@ -153,19 +126,49 @@
   </ul>
 </section>
 
+<section>
   <h2>推薦訓練菜單</h2>
 
-<div id="menuContainer">正在載入菜單...</div>
+  <div id="menuContainer">正在載入菜單...</div>
 
-<div style="margin-top:12px;">
-  <button id="acceptBtn" class="btn btn-primary">
-    ✅ 接受推薦，開始訓練
-  </button>
-  <button id="manualBtn" class="btn btn-outline" style="margin-left:8px;">
-    ✏️ 我想自己選
-  </button>
-</div>
+  <div style="margin-top:12px;">
+    <button id="acceptBtn" class="btn btn-primary">
+      ✅ 接受推薦，開始訓練
+    </button>
+    <button id="manualBtn" class="btn btn-outline" style="margin-left:8px;">
+      ✏️ 我想自己選
+    </button>
+  </div>
+</section>
 
+<!-- 🔽 手動調整區，改放在下面，預設隱藏 -->
+<section id="manualArea"
+         style="margin-top:14px; padding-top:12px; border-top:1px dashed #ccc; display:none;">
+  <p style="margin:8px 0;">手動調整今日訓練目標與部位：</p>
+
+  <label for="manualGoal">訓練目標：</label>
+  <select id="manualGoal">
+    <option value="增肌">增肌</option>
+    <option value="力量">力量</option>
+    <option value="減脂">減脂</option>
+    <option value="耐力">耐力</option>
+  </select>
+
+  <label for="manualPart" style="margin-left:8px;">訓練部位：</label>
+  <select id="manualPart">
+    <option value="胸部">胸部</option>
+    <option value="背部">背部</option>
+    <option value="腿部">腿部</option>
+    <option value="肩部">肩部</option>
+    <option value="二頭肌">二頭肌</option>
+    <option value="三頭肌">三頭肌</option>
+    <option value="核心">核心</option>
+  </select>
+
+  <button id="applyManualBtn" class="btn btn-primary" style="margin-left:8px;">
+    重新套用條件
+  </button>
+</section>
 
   </main>
 <!-- 🔵 自訂 Confirm 彈窗（通用） -->
