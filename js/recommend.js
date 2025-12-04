@@ -215,7 +215,6 @@ window.addEventListener("DOMContentLoaded", async () => {
   if (!userName) return;
 
   const acceptBtn      = document.getElementById("acceptBtn");
-  const manualBtn      = document.getElementById("manualBtn");
   const manualArea     = document.getElementById("manualArea");
   const manualGoal     = document.getElementById("manualGoal");
   const manualPart     = document.getElementById("manualPart");
@@ -224,30 +223,31 @@ window.addEventListener("DOMContentLoaded", async () => {
   const applyManualBtn = document.getElementById("applyManualBtn");
   const menuContainer  = document.getElementById("menuContainer");
 
-  // ⭐⭐⭐ 一進到頁面就讓手動設定區塊展開 ⭐⭐⭐
-  manualArea.style.display = "block";   // <-- 關鍵！
+  // ⭐⭐⭐ 一進頁面就展開手動設定區塊 ⭐⭐⭐
+  if (manualArea) manualArea.style.display = "block";
 
+  // 載入推薦（含上次訓練 → 推薦今日目標/部位）
   let { currentGoal, currentPart } = await loadRecommendation(userName);
 
-  // 接受推薦
-  acceptBtn.addEventListener("click", () => {
-    localStorage.setItem("lastGoal", currentGoal);
-    localStorage.setItem("lastPart", currentPart);
+  // ================================
+  //  ✔ 接受推薦 → 直接開啟 training.html
+  // ================================
+  if (acceptBtn) {
+    acceptBtn.addEventListener("click", () => {
+      localStorage.setItem("lastGoal", currentGoal);
+      localStorage.setItem("lastPart", currentPart);
 
-    const url =
-      `training.html?goal=${encodeURIComponent(currentGoal)}` +
-      `&part=${encodeURIComponent(currentPart)}`;
-    window.location.href = url;
-  });
+      const url =
+        `training.html?goal=${encodeURIComponent(currentGoal)}` +
+        `&part=${encodeURIComponent(currentPart)}`;
 
-  // ❌ 手動打開/收起按鈕不再需要 → 移除/註解掉
-  /*
-  manualBtn.addEventListener("click", () => {
-    manualArea.style.display = manualArea.style.display === "none" ? "block" : "none";
-  });
-  */
+      window.location.href = url;
+    });
+  }
 
-  // 手動重新套用條件
+  // ================================
+  //  ✔ 手動調整今日目標 / 部位（不離開頁面）
+  // ================================
   if (applyManualBtn) {
     applyManualBtn.addEventListener("click", async () => {
       currentGoal = manualGoal.value;
