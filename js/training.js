@@ -397,6 +397,30 @@ async function displayExercises(db, userName, exercises) {
     // 存到全域（目前你有在用 window.charts，就順便維持）
     window.charts.push({ safeName, chart });
   }
+// 👉 若選擇的是「減脂」，顯示有氧提示（放在動作卡片全部建立完後）
+const goal = localStorage.getItem("lastGoal");
+if (goal === "減脂") {
+  const cardioTip = document.createElement("div");
+  cardioTip.style.cssText = `
+    margin-top: 18px;
+    padding: 14px;
+    background: #fff3cd;
+    border-left: 4px solid #ffca2c;
+    border-radius: 6px;
+    font-size: 16px;
+    line-height: 1.6;
+  `;
+  cardioTip.innerHTML = `
+    <b>🔥 減脂建議加入有氧運動：</b><br>
+    完成本次重量訓練後建議再加做 <b>20–30 分鐘</b> 有氧，例如：
+    <ul style="margin:6px 0 0 20px;">
+      <li>跑步機快走／間歇跑</li>
+      <li>飛輪 20–30 分鐘</li>
+    </ul>
+    建議強度：最大心率的 <b>60%–70%</b>，最能促進脂肪燃燒。
+  `;
+  container.appendChild(cardioTip);
+}
 
   // === ✅ 完成訓練按鈕（下面這段跟你原本一樣，不用動） ===
   if (document.getElementById("completeTrainingBtn")) return;
