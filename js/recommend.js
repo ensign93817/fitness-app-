@@ -149,6 +149,16 @@ async function loadRecommendation(userName) {
 todayGoalText.textContent = currentGoal;
 todayPartText.textContent = currentPart;
 
+  // ⭐ 減脂時顯示有氧說明
+const cardioHint = document.getElementById("cardioHint");
+if (cardioHint) {
+  if (currentGoal === "減脂") {
+    cardioHint.style.display = "block";
+  } else {
+    cardioHint.style.display = "none";
+  }
+}
+
 // 手動選單可能還沒做出來，所以要先確認有沒有找到
 if (manualGoal) manualGoal.value = currentGoal;
 if (manualPart) manualPart.value = currentPart;
@@ -256,6 +266,16 @@ window.addEventListener("DOMContentLoaded", async () => {
       todayGoalText.textContent = currentGoal;
       todayPartText.textContent = currentPart;
 
+          // ⭐ 重新套用條件時，也更新有氧說明
+    const cardioHint = document.getElementById("cardioHint");
+    if (cardioHint) {
+      if (currentGoal === "減脂") {
+        cardioHint.style.display = "block";
+      } else {
+        cardioHint.style.display = "none";
+      }
+    }
+      
       await loadMenuPreview(userName, currentGoal, currentPart, menuContainer);
     });
   }
